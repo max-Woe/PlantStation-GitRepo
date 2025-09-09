@@ -1,0 +1,40 @@
+﻿@page "/sensors"
+@rendermode InteractiveWebAssembly
+@inject HttpClient Http
+<h3>Sensors</h3>
+
+<div>
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Type</th>
+				<th>Unite</th>
+				<th>DeviceId</th>
+				<th>StationId</th>
+			</tr>
+
+		</thead>
+		<tbody>
+			@foreach (Sensor sensor in sensors)
+			{
+				<tr>
+					<td>@sensor.Id</td>
+					<td>@sensor.Type</td>
+					<td>@sensor.Unit</td>
+					<td>@sensor.DeviceId</td>
+					<td>@sensor.StationId</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+@code {
+	private List<Sensor> sensors = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		sensors = await Http.GetFromJsonAsync<List<Sensor>>("api/Sensor/GetAllSensors");
+	}
+}

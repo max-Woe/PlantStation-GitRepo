@@ -1,0 +1,34 @@
+﻿@page "/stations"
+@rendermode InteractiveWebAssembly
+@inject HttpClient Http
+
+<h3>Stations</h3> *
+<div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Anz.Sensoren</th>
+                <th>Erstellt am</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var station in stations)
+            {
+                <tr>
+                    <td>@station.Id</td>
+                    <td>@station.SensorsCount</td>
+                    <td>@station.CreatedAt</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+@code {
+	private List<Station> stations = new();
+
+	protected override async Task OnInitializedAsync() 
+	{ 
+		stations = await Http.GetFromJsonAsync<List<Station>>("api/Station/GetAllStations"); 
+	}
+} 
