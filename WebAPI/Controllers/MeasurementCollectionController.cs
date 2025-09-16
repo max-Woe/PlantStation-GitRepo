@@ -74,8 +74,9 @@ public class MeasurementCollectionController(IMeasurementRepo measurementRepo, I
                 sensors.Add(await _sensorRepo.Create(new Sensor()
                 {
                     Id = 0,
-                    Unit = receivedMeasurement.Type,
+                    Unit = receivedMeasurement.Unit,
                     DeviceId = 99999,
+                    Type = receivedMeasurement.Type,
                     StationId = station.Id,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
