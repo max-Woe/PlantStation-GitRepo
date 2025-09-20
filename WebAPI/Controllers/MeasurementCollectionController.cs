@@ -54,24 +54,19 @@ public class MeasurementCollectionController(IMeasurementRepo measurementRepo, I
         if(_stationRepo is StationRepo stationRepo && _sensorRepo is SensorRepo sensorRepo && _measurementRepo is MeasurementRepo measurementRepo)
         {
             Station? station = await stationRepo.GetByMacAdress(receivedMeasurement.MacAddress);
+            Sensor? sensor;
 
             if (station == null)
             {
                 station = await _stationRepo.Create(new Station()
-                                {
-                                    Id = 0,
-                                    MacAddress = receivedMeasurement.MacAddress,
-                                    CreatedAt = DateTime.UtcNow,
-                                    SensorsCount = 0
-                                });
-            }
-            
-            List<Sensor> sensors = await sensorRepo.GetListByStationId(station.Id);
+                {
+                    Id = 0,
+                    MacAddress = receivedMeasurement.MacAddress,
+                    CreatedAt = DateTime.UtcNow,
+                    SensorsCount = 0
+                });
 
-            //TODO: statt auf Einheit zu prüfen, besser einen Typ dem Übermittelten Messwert(Arduino) und dem Sensor(API) hinzufügen 
-            if(!sensorRepo.CheckForSensorByStationIdAndUnit(station.Id, receivedMeasurement.Type).Result)
-            {
-                sensors.Add(await _sensorRepo.Create(new Sensor()
+                sensor = await _sensorRepo.Create(new Sensor()
                 {
                     Id = 0,
                     Unit = receivedMeasurement.Unit,
@@ -80,30 +75,45 @@ public class MeasurementCollectionController(IMeasurementRepo measurementRepo, I
                     StationId = station.Id,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
-                }));
+                });
             }
-
-            foreach (Sensor sensor in sensors)
+            else
             {
-                if (sensor.Type == receivedMeasurement.Type)
+                sensor = await sensorRepo.GetSensorsByStationIdAndType(station.Id, receivedMeasurement.Type);
+
+                if (sensor == null)
                 {
-                    Measurement measurement = new Measurement()
+                    sensor= await _sensorRepo.Create(new Sensor()
                     {
                         Id = 0,
-                        Value = receivedMeasurement.Value,
-                        Type = receivedMeasurement.Type,
                         Unit = receivedMeasurement.Unit,
-                        SensorId = sensor.Id,
-                        SensorIdReference = 99999,
-                        RecordedAt =receivedMeasurement.Time,
-                        CreatedAt = DateTime.UtcNow
-                    };
+                        DeviceId = 99999,
+                        Type = receivedMeasurement.Type,
+                        StationId = station.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    });
 
-                    await measurementRepo.Create(measurement, receivedMeasurement.MacAddress);
-
-                    return Ok(receivedMeasurement);
                 }
             }
+            
+            Measurement measurement = new Measurement()
+            {
+                Id = 0,
+                Value = receivedMeasurement.Value,
+                Type = receivedMeasurement.Type,
+                Unit = receivedMeasurement.Unit,
+                SensorId = sensor.Id,
+                SensorIdReference = 99999,
+                RecordedAt = receivedMeasurement.Time,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await measurementRepo.Create(measurement, receivedMeasurement.MacAddress);
+
+            return Ok(receivedMeasurement);
+            //    }
+            //}
         }
         return BadRequest(receivedMeasurement);
     }

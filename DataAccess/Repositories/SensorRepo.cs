@@ -84,6 +84,21 @@ namespace DataAccess.Repositories
 
             return sensorsFromDb;
         }
+
+
+        public async Task<Sensor?> GetSensorsByStationIdAndType(int stationId, string type)
+        {
+            _logger.StartTimer();
+
+            Sensor? sensorFromDb = await _context.Sensors.FirstOrDefaultAsync(s => s.StationId == stationId && s.Type == type);
+
+            _logger.Log("Sensor", "queried", sensorFromDb);
+
+            return sensorFromDb;
+        }
+
+
+
         public async Task<List<Sensor>> GetByListOfIds(List<int> ids)
         {
             _logger.StartTimer();
