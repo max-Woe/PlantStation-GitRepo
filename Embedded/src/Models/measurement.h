@@ -8,22 +8,22 @@
 class Measurement {
 public:
     Measurement();
-    Measurement(time_t time, float value, const String& unit, 
-                const String& type, int pin, const String& macAddress);
+    Measurement(time_t time, float value, const char* unit, 
+             const char* type, int pin, const char* macAddress);
 
     time_t getTime() const;
     float getValue() const;
-    String getUnit() const;
-    String getType() const;
+    const char* getUnit() const;
+    const char* getType() const;
     int getPin() const;
-    String getMacAddress() const;
+    const char* getMacAddress() const;
         
     void setTime(time_t time);
     void setValue(float value);
-    void setUnit(String unit);
-    void setType(String type);
+    void setUnit(const char* unit);
+    void setType(const char* type);
     void setPin(int pin);
-    void setMacAddress(String macAddress);
+    void setMacAddress(const char* macAddress);
     
     void print() const;
     String toJson() const;
@@ -31,10 +31,10 @@ public:
 private:
     time_t _time;
     float _value;
-    String _unit;
-    String _type;
+    const char* _unit;
+    const char* _type;
     int _pin;
-    String _macAddress;
+    const char* _macAddress;
 };
 
 #endif // MEASUREMENT_H
