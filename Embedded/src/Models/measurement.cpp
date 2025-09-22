@@ -1,11 +1,11 @@
-#include "Measurement.h"
+#include "measurement.h"
 #include <ArduinoJson.h>
 
 Measurement::Measurement() 
     : _time(0), _value(0.0), _unit(""), _type(""), _pin(-1), _macAddress("") {}
 
-Measurement::Measurement(time_t time, float value, const String& unit, 
-                         const String& type, int pin, const String& macAddress)
+Measurement::Measurement(time_t time, float value, const char* unit, 
+                         const char* type, int pin, const char* macAddress)
     : _time(time), 
       _value(value), 
       _unit(unit), 
@@ -15,17 +15,17 @@ Measurement::Measurement(time_t time, float value, const String& unit,
 
 time_t Measurement::getTime() const { return _time; }
 float Measurement::getValue() const { return _value; }
-String Measurement::getUnit() const { return _unit; }
-String Measurement::getType() const { return _type; }
+const char* Measurement::getUnit() const { return _unit; }
+const char* Measurement::getType() const { return _type; }
 int Measurement::getPin() const { return _pin; }
-String Measurement::getMacAddress() const { return _macAddress; }
+const char* Measurement::getMacAddress() const { return _macAddress; }
 
 void Measurement::setTime(time_t time) {_time = time;}; 
 void Measurement::setValue(float value) {_value = value;};
-void Measurement::setUnit(String unit) {_unit = unit;};
-void Measurement::setType(String type) {_type = type;};
+void Measurement::setUnit(const char* unit) {_unit = unit;};
+void Measurement::setType(const char* type) {_type = type;};
 void Measurement::setPin(int pin)  {_pin = pin;};
-void Measurement::setMacAddress(String macAddress) {_macAddress = macAddress;};
+void Measurement::setMacAddress(const char* macAddress) {_macAddress = macAddress;};
 
 void Measurement::print() const {
     Serial.print("Time: "); Serial.print(_time);
