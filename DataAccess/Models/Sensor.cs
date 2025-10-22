@@ -63,4 +63,9 @@ public class Sensor
         Station = sensor.Station;
         UpdatedAt = sensor.UpdatedAt;
     }
+
+    public override string? ToString()
+    {
+        return $"Sensor [Id={Id}, Type={Type}, Unit={Unit}, DeviceId={DeviceId}, StationId={StationId}, CreatedAt={CreatedAt}, UpdatedAt={UpdatedAt}]";
+    }
 }

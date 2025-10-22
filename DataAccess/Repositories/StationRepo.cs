@@ -8,248 +8,436 @@ using LoggingService;
 
 namespace DataAccess.Repositories 
 {
+    /// <summary>
+    /// Implements the <see cref="IRepo{T}"/> and <see cref="IStationRepo"/> contracts for the <see cref="Station"/> entity.
+    /// Provides concrete database access (CRUD) and logging functionality for Station entities.
+    /// </summary>
     public class StationRepo(ApiContext context, ILoggingService logger) : BaseRepo(context, logger), IRepo<Station>, IStationRepo
     {
+        // ------------------------------------
+        // C - CREATE Operations
+        // ------------------------------------
+
+        /// <inheritdoc/>
         public async Task<Station> Create(Station station)
         {
             _logger.StartTimer();
 
-            _context.Stations.Add(station);
-            await SaveChanges();
-
-            _logger.Log("Station", "created", station);
+            await TryExecuteAsync(async() => await _context.Stations.AddAsync(station), "AddAsync", "Create", station);
+            await TryExecuteAsync(async() => await _context.SaveChangesAsync(), "SaveChangesAsync", "Create", station);
+            
+            _logger.StopTimer();
             
             return station;
         }
-
-        public async Task<Station?> GetByMacAdress(string macAdress)
-        {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            Station? stationFromDb = _context.Stations.FirstOrDefault(s => s.MacAddress == macAdress);
-            LogOperationTime(stopwatch, "Station", "queried", stationFromDb);
-
-            return stationFromDb;
-        }
+        /// <inheritdoc/>
         public async Task<List<Station>> CreateByList(List<Station> stations)
         {
             if(!stations.IsNullOrEmpty())
             {
-                Stopwatch stopwatch = Stopwatch.StartNew();
-                foreach (var station in stations)
+                _logger.StartTimer();
+                try
                 {
-                    _context.Stations.Add(station);
+                    foreach (var station in stations)
+                    {
+                        await TryExecuteAsync(async() => await _context.Stations.AddAsync(station), "AddAsync", "CreateByList", station);
+                    }
+
+                    await TryExecuteAsync(async() => await _context.SaveChangesAsync(), "SaveChangesAsync", "CreateByList", stations);
                 }
-
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "Stations", "created", stations);
+                catch (Exception)
+                {
+                    return new List<Station>();
+                }
+                finally
+                {
+                    _logger.StopTimer();
+                }
             }        
 
             return stations;
         }
 
+        // ------------------------------------
+        // R - READ Operations
+        // ------------------------------------
+
+        /// <inheritdoc/>
         public async Task<Station>? GetById(int id)
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            _logger.StartTimer();
 
-            Station stationFromDb = _context.Stations.Find(id);
+            Station stationFromContext;
 
-            LogOperationTime(stopwatch, "Station", "queried", stationFromDb);
+            try
+            {
+                stationFromContext = await TryExecuteAsync(async() => await _context.Stations.FindAsync(id), "FindAsync", "GetById", id);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
 
-            return stationFromDb;
+            return stationFromContext;
         }
+        /// <summary>
+        /// Retrieves a single station entity based on its MAC address.
+        /// </summary>
+        /// <param name="macAdress">The MAC address of the station.</param>
+        /// <returns>A Task that returns the found <see cref="Station"/> entity, or <c>null</c> if no matching station is found or on failure.</returns>
+        public async Task<Station?> GetByMacAdress(string macAdress)
+        {
+            _logger.StartTimer();
+            try
+            {
+                Station? stationFromContext = await TryExecuteAsync(async () => await _context.Stations.FirstOrDefaultAsync(s => s.MacAddress == macAdress), "FirstOrDefaultAsync", "GetByMacAdress", macAdress);
+
+                if (stationFromContext == null)
+                {
+                    return null;
+                }
+
+                return stationFromContext;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
+        }
+        /// <summary>
+        /// Retrieves a list of station entities based on a list of their unique IDs.
+        /// </summary>
+        /// <param name="ids">The list of station IDs to retrieve.</param>
+        /// <returns>A Task that returns a list of found <see cref="Station"/> entities. Returns an empty list if no matching stations are found or on failure.</returns>
         public async Task<List<Station>> GetByListOfIds(List<int> ids)
         {
-            List<Station> stationsFromDb = new List<Station>();
+            List<Station> stationsFromContext;
+            Station? stationFromContext;
 
-            Station? stationFromDb;
+            _logger.StartTimer();
 
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            foreach (int id in ids)
+            try
             {
-                stationFromDb = _context.Stations.Find(id);
+                stationsFromContext = new List<Station>();
 
-                stationsFromDb.Add(stationFromDb);
+                foreach (int id in ids)
+                {
+                    stationFromContext = await TryExecuteAsync(async() => await _context.Stations.FindAsync(id), "FindAsync", "GetByListOfIds", id);
+                    if (stationFromContext != null)
+                    {
+                        stationsFromContext.Add(stationFromContext);
+                    }
+                }
+
+                return stationsFromContext;
             }
-
-            if(stationsFromDb.Count > 0)
+            catch (Exception)
             {
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "Stations", "queried", stationsFromDb);
+                return new List<Station>();
             }
-
-            return stationsFromDb;
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
+        /// <inheritdoc/>
         public async Task<List<Station>> GetAll()
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();  
-            
-            List<Station> stationsFromDb = _context.Stations.ToList();
+            _logger.StartTimer();
+            try
+            {
+                List<Station>? stationsFromContext = new List<Station>();
+                
+                stationsFromContext = await TryExecuteAsync(async() => await _context.Stations.ToListAsync(), "ToListAsync", "GetAll", null);
 
-            LogOperationTime(stopwatch, "Stations", "queried", stationsFromDb);
+                if (stationsFromContext == null)
+                {
+                    return new List<Station>();
+                }
 
-            return stationsFromDb;
+                return stationsFromContext;
+            }
+            catch (Exception)
+            {
+                return new List<Station>();
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
+        }
+        /// <summary>
+        /// Retrieves a list of all station IDs present in the database.
+        /// </summary>
+        /// <returns>A Task that returns a list of all station IDs (<see cref="int"/>). Returns an empty list on failure.</returns>
+        public async Task<List<int>> GetAllIds()
+        {
+
+            _logger.StartTimer();
+
+            try
+            {
+                List<int>? stationIdsFromContext = await TryExecuteAsync(async() => await _context.Stations.Select(s => s.Id).ToListAsync(), "ToListAsync", "GetAllIds", null);
+                if (stationIdsFromContext == null)
+                {
+                    return new List<int>();
+                }
+                return stationIdsFromContext;
+            }
+            catch (Exception)
+            {
+                return new List<int>();
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
 
+        // ------------------------------------
+        // U - UPDATE Operations
+        // ------------------------------------
+
+        /// <inheritdoc/>
         public async Task<Station?> Update(Station station)
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            _logger.StartTimer();
 
-            Station? stationFromDb = await _context.Stations.FindAsync(station.Id);
-
-            if (stationFromDb != null)
+            try
             {
-                stationFromDb.Update(station);
-                try
+                Station? stationFromContext = await TryExecuteAsync(async () => await _context.Stations.FindAsync(station.Id), "FindAsync", "Update", null);
+
+                if (stationFromContext == null)
                 {
-                    _context.SaveChanges();
+                    return null;
                 }
-                catch (DbUpdateException ex)
-                {
-                    Log.Error(ex, ex.Message);
-                }
+                
+                stationFromContext.Update(station);
+
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "Update", stationFromContext);
+                
+                return stationFromContext;
             }
-
-            LogOperationTime(stopwatch, "Station", "updated", stationFromDb);
-
-            return stationFromDb;
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
+        /// <summary>
+        /// Updates a list of station entities in the database.
+        /// This method is functionally identical to <see cref="UpdateByList(List{Station})"/>.
+        /// </summary>
+        /// <param name="stations">The list of <see cref="Station"/> entities with updated data.</param>
+        /// <returns>A Task that returns a list of the successfully updated <see cref="Station"/> entities. Returns an empty list if the input is empty or on failure.</returns>
         public async Task<List<Station>> UpdateStations(List<Station> stations)
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            List<Station> stationsFromDb = new List<Station>();
-            Station stationFromDb = new Station();
-
-            foreach (Station station in stations)
+            if (stations.IsNullOrEmpty())
             {
-                stationFromDb = _context.Stations.Find(station.Id);
-
-                if (stationFromDb != null)
-                {
-                    stationFromDb.Update(station);
-
-                    stationsFromDb.Add(stationFromDb);
-                }
+                return new List<Station>();
             }
-            
-            SaveChanges();
 
-            LogOperationTime(stopwatch, "Stations", "queried", stationsFromDb);
+            _logger.StartTimer();
 
-            return stationsFromDb;
+            try
+            {
+                Station? stationFromContext;
+                List<Station> stationsFromContext = new List<Station>();
+                foreach (Station station in stations)
+                {
+                    stationFromContext = await TryExecuteAsync(async () => await _context.Stations.FindAsync(station.Id), "FindAsync", "UpdateStations", station);
+                    if (stationFromContext != null)
+                    {
+                        stationFromContext.Update(station);
+                        stationsFromContext.Add(stationFromContext);
+                    }
+                }
+                if (stationsFromContext.Count > 0)
+                {
+                    await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "UpdateStations", stationsFromContext);
+                }
+                return stationsFromContext;
+            }
+            catch (Exception)
+            {
+                return new List<Station>();
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
+        /// <inheritdoc/>
         public async Task<List<Station>> UpdateByList(List<Station> stations)
         {
-            List<Station> stationsFromDb = new List<Station>();
-
-            Station? stationFromDb;
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            foreach (Station station in stations)
+            if (stations.IsNullOrEmpty())
             {
-                stationFromDb = _context.Stations.Find(station.Id);
+                return new List<Station>();
+            }
 
-                if (stationFromDb != null)
+            _logger.StartTimer();
+
+            try
+            {
+                Station? stationFromContext;
+                List<Station> stationsFromContext = new List<Station>();
+                foreach (Station station in stations)
                 {
-                    stationFromDb.Update(station);
-                    stationsFromDb.Add(stationFromDb);            
+                    stationFromContext = await TryExecuteAsync(async () => await _context.Stations.FindAsync(station.Id), "FindAsync", "UpdateStations", station);
+                    if (stationFromContext != null)
+                    {
+                        stationFromContext.Update(station);
+                        stationsFromContext.Add(stationFromContext);
+                    }
                 }
+                if (stationsFromContext.Count > 0)
+                {
+                    await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "UpdateStations", stationsFromContext);
+                }
+                return stationsFromContext;
             }
-
-            if (stationsFromDb.Count > 0)
+            catch (Exception)
             {
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "Stations", "updated", stationsFromDb);
+                return new List<Station>();
             }
-
-            return stationsFromDb;
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
 
-        public async Task<Station?> DeleteById(int id)
+        // ------------------------------------
+        // D - DELETE Operations
+        // ------------------------------------
+
+        /// <inheritdoc/>
+        public async Task<Station?> Delete(int id)
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            Station? stationFromDb = await _context.Stations.FindAsync(id);
-
-            if (stationFromDb != null)
+            if(id <= 0)
             {
-                _context.Remove(stationFromDb);
-                _context.SaveChanges();
+                return null;
             }
 
-            LogOperationTime(stopwatch, "Station", "queried", stationFromDb);
+            _logger.StartTimer();
 
-            return stationFromDb;
+            try
+            {
+                Station? stationFromContext = await TryExecuteAsync(async () => await _context.Stations.FindAsync(id), "FindAsync", "Delete", id);
+                if (stationFromContext == null)
+                {
+                    return null;
+                }
+                _context.Stations.Remove(stationFromContext);
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "Delete", stationFromContext);
+
+                return stationFromContext;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
+        /// <summary>
+        /// Deletes all station entities from the database.
+        /// This method is functionally identical to <see cref="DeleteAll()"/>.
+        /// </summary>
+        /// <returns>A Task that returns a list of the deleted <see cref="Station"/> entities. Returns <c>null</c> or an empty list on failure or if no stations were present.</returns>
         public async Task<List<Station>>? DeleteAllStations()
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            List<Station> stationsFromDb = _context.Stations.ToList();
-
-            if (stationsFromDb.Count > 0)
-            {
-                _context.RemoveRange(stationsFromDb);
-
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "Station", "queried", stationsFromDb);
+            _logger.StartTimer();
+            
+            try{
+                List<Station> stationsFromContext = await TryExecuteAsync(async () => await _context.Stations.ToListAsync(), "ToListAsync", "DeleteAllStations", null);
+                if (stationsFromContext == null || stationsFromContext.Count == 0)
+                {
+                    return new List<Station>();
+                }
+                _context.Stations.RemoveRange(stationsFromContext);
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "DeleteAllStations", stationsFromContext);
+                return stationsFromContext;
             }
-
-            return stationsFromDb;
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
-
+        /// <inheritdoc/>
         public async Task<List<Station>> DeleteByListOfIds(List<int> ids)
         {
-            List<Station> stationsFromDb = new List<Station>();
-
-            Station? stationFromDb;
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            foreach (int id in ids)
+            if (ids.IsNullOrEmpty())
             {
-                stationFromDb = _context.Stations.Find(id);
-                
-                if(stationFromDb != null)
-                { 
-                    stationsFromDb.Add(stationFromDb); 
+                return new List<Station>();
+            }
+
+            _logger.StartTimer();
+
+            try
+            {
+                List<Station> stationsFromContext = new List<Station>();
+                foreach (int id in ids)
+                {
+                    stationsFromContext.AddRange(await TryExecuteAsync(async () => await _context.Stations.Where(s => s.Id == id).ToListAsync(), "Where.ToListAsync", "DeleteByListOfIds", id));
                 }
+                if (stationsFromContext.Count == 0)
+                {
+                    return new List<Station>();
+                }
+                _context.Stations.RemoveRange(stationsFromContext);
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "DeleteByListOfIds", stationsFromContext);
+                return stationsFromContext;
             }
-
-            if (stationsFromDb.Count > 0)
+            catch (Exception)
             {
-                _context.RemoveRange(stationsFromDb);
-
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "Stations", "deleted", stationsFromDb);
+                return new List<Station>();
             }
-
-            return stationsFromDb;
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
-
+        /// <inheritdoc/>
         public async Task<List<Station>> DeleteAll()
         {
-            Stopwatch stopwatch = Stopwatch.StartNew(); 
+            _logger.StartTimer();
 
-            List<Station> stationsFromDb = _context.Stations.ToList();
-
-            if (stationsFromDb.Count > 0)
+            try
             {
-                _context.RemoveRange(stationsFromDb);
-
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "Stations", "deleted", stationsFromDb);
+                List<Station>? stationsFromContext = await TryExecuteAsync(async () => await _context.Stations.ToListAsync(), "ToListAsync", "DeleteAll", null);
+                if (stationsFromContext == null || stationsFromContext.Count == 0)
+                {
+                    return new List<Station>();
+                }
+                _context.Stations.RemoveRange(stationsFromContext);
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "DeleteAll", stationsFromContext);
+                return stationsFromContext;
             }
-
-            return stationsFromDb;
+            catch (Exception)
+            {
+                return new List<Station>();
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
 
     }

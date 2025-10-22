@@ -1,12 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using DataAccess.Models;
+using DataAccess.Interfaces;
 
 namespace DataAccess;
 
 /// <summary>
 /// Represents an Database Context for Database access.
 /// </summary>
-public class ApiContext : DbContext
+public class ApiContext : DbContext, IApiContext
 {
     /// <summary>
     /// Gets or sets the Measurements entity.
@@ -64,5 +65,18 @@ public class ApiContext : DbContext
         : base(options)
     {
 
+    }
+
+    /// <summary>
+    /// Configures the database model.
+    /// </summary>
+    /// <param name="modelBuilder"></param>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Measurement>()
+            .HasIndex(m => m.RecordedAt);
+
+        // Rufe die Basis-Methode auf, um sicherzustellen, dass Standardkonventionen angewendet werden
+        base.OnModelCreating(modelBuilder);
     }
 }

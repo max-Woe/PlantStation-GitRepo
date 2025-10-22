@@ -45,5 +45,10 @@ namespace DataAccess.Models
         /// </summary>
         public string MacAddress { get; set; }
 
+        public override string ToString()
+        {
+            return $"Time = {Time}, WaterLevel = {WaterLevel}, Moisture = {Moisture}, Temperature = {Temperature}, Humidity = {Humidity}, StationId = {StationId}, MacAddress = {MacAddress}";
+        }
+
     }
 }

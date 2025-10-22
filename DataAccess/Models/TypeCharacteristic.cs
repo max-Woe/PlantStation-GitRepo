@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.CodeAnalysis.Editing;
+using System.ComponentModel.DataAnnotations;
 
 namespace DataAccess.Models
 {
@@ -18,6 +19,13 @@ namespace DataAccess.Models
         /// </summary>
         public string Name { get; set; }
 
-        //TODO: evtl special features einführen, falls sie direkten Einfluss auf Meldugnen o.Ä. haben.
+        /// <summary>
+        /// Returns a string representation of the current object that includes its primary key (<c>Id</c>) and its descriptive name (<c>Name</c>).
+        /// </summary>
+        /// <returns>A string formatted as "Id = [Value], Name = [Value]".</returns>
+        public override string ToString()
+        {
+            return $"Id = {Id}, Name = {Name}";
+        }
     }
 }
