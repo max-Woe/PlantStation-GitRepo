@@ -1,0 +1,97 @@
+﻿<Window x:Class="WPFClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WPFClient"
+        xmlns:viewModel="clr-namespace:WPFClient.ViewModels"
+        xmlns:scottPlot="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
+        mc:Ignorable="d"
+        Title="PlantStationView" Height="450" Width="800"
+        Closing="Window_Closing">
+
+    <d:DesignProperties.DataContext>
+        <viewModel:MainWindowViewModel/>
+    </d:DesignProperties.DataContext>
+
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="New"/>
+                <MenuItem Header="Open"/>
+                <MenuItem Header="Save"/>
+                <Separator/>
+                <MenuItem Header="Exit"/>
+            </MenuItem>
+        </Menu>
+
+        <StatusBar DockPanel.Dock="Bottom" Height="20px" Background="{Binding StatusColor}">
+            <StatusBarItem>
+                <TextBlock Text="Letztes Update: "/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="Station: "/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusUpdateStationId}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="; Sensor: "/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusUpdateSensorId}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="; Zeitpunkt: "/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusUpdateTime}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="; Wert: "/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusUpdateMeasurementValue}"/>
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid x:Name="MainGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="FilterSideBarDefinition" Width="1*"/>
+                <ColumnDefinition x:Name="MeasurementPlotDefinition" Width="4*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel x:Name="SideBar" Margin="5">
+                <Grid x:Name="FilterSideBar" Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel x:Name="StationSection" Grid.Row="0" Margin="5">
+                        <Label x:Name="StationLabel" Grid.Row="0" Grid.Column="0" Margin="2" Content="Station:"/>
+                        <ComboBox x:Name="StationComboBox" Grid.Row="0" Grid.Column="1" Margin="2" ItemsSource="{Binding ComboBoxStations, Mode=TwoWay}" SelectedItem="{Binding StationId, Mode=TwoWay}" SelectedIndex="{Binding StationId, Mode=TwoWay}" />
+                    </StackPanel>
+                    <StackPanel x:Name="SensorSection" Grid.Row="1" Margin="5">
+                    <Label x:Name="SensorLabel" Grid.Row="1" Grid.Column="0" Margin="2" Content="Sensor:"/>
+                        <ComboBox x:Name="SensorComboBox" Grid.Row="1" Grid.Column="1" Margin="2" ItemsSource="{Binding ComboBoxSensors, Mode=TwoWay}" SelectedItem="{Binding SensorId}"/>
+                    </StackPanel>
+                    <StackPanel x:Name="TimespanSection" Grid.Row="2" Margin="5">
+                        <Label x:Name="TimeSpanLabel" Grid.Row="2" Grid.Column="0" Margin="2" Content="Zeitraum(letzte):"/>
+                        <ComboBox x:Name="TimeSpanComboBox" Grid.Row="2" Grid.Column="1" Margin="2" ItemsSource="{Binding ComboBoxTimeSpans, Mode=TwoWay}" SelectedItem="{Binding SelectedTimeSpan}" RenderTransformOrigin="0.5,0.5"/>
+                    </StackPanel>
+                </Grid>
+                <Button x:Name="LoadButton" Grid.Row="2"  Grid.Column="0" Margin="5" Content="Load" Command="{Binding LoadDataCommand}"/>
+            </StackPanel>
+
+            <Grid x:Name="MeasurementPlot" Grid.Column="1">
+                <scottPlot:WpfPlot 
+                    x:Name="wpfPlot" 
+                    Grid.Column="0" 
+                    />
+            </Grid>
+        </Grid>
+    </DockPanel>
+</Window>
