@@ -4,196 +4,350 @@ using DataAccess.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using LoggingService;
+using Microsoft.IdentityModel.Tokens;
 
 namespace DataAccess.Repositories
 {
+    /// <summary>
+    /// Implements the <see cref="IRepo{T}"/> contract for the <see cref="PlantType"/> entity.
+    /// Provides concrete database access (CRUD) and logging functionality for plant type entities.
+    /// </summary>
     public class PlantTypeRepo(ApiContext context, ILoggingService logger) : BaseRepo(context, logger), IRepo<PlantType>
     {
-        public async Task<PlantType> Create(PlantType plantType)
+        // ------------------------------------
+        // C - CREATE Operations
+        // ------------------------------------
+
+        /// <summary>
+        /// Creates a single plant type entity in the database.
+        /// </summary>
+        /// <param name="plantType">The <see cref="PlantType"/> entity to be stored.</param>
+        /// <returns>A Task that returns the stored <see cref="PlantType"/> entity with its updated ID, or <c>null</c> if the operation fails or the input is invalid.</returns>
+        public async Task<PlantType?> Create(PlantType plantType)
         {
-            _context.PlantTypes.Add(plantType);
+            if (plantType == null) 
+            {
+                return null;
+            }
+            _logger.StartTimer();
 
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            
-            SaveChanges();
+            try
+            {
+                await TryExecuteAsync(async () => await _context.PlantTypes.AddAsync(plantType), "AddAsync", "Create", plantType);
 
-            LogOperationTime(stopwatch, "PlantType", "created", plantType);
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "Create", plantType);
 
-            return plantType;
+                return plantType;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
+
+        /// <summary>
+        /// Creates a list of plant type entities in the database.
+        /// </summary>
+        /// <param name="plantTypes">The list of <see cref="PlantType"/> entities to be stored.</param>
+        /// <returns>A Task that returns the list of successfully stored <see cref="PlantType"/> entities. Returns an empty list if the input is empty or on failure.</returns>
         public async Task<List<PlantType>> CreateByList(List<PlantType> plantTypes)
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            if (plantTypes.Count > 0)
+            if (plantTypes == null || plantTypes.Count == 0)
             {
+                return new List<PlantType>();
+            }
+
+            _logger.StartTimer();
+
+            List<PlantType> createdPlantTypes = new List<PlantType>();
+
+            try
+            {
+                foreach (var plantType in plantTypes)
+                {
+                    await TryExecuteAsync(async () => await _context.PlantTypes.AddAsync(plantType), "AddAsync", "CreateByList", plantType);
+                    createdPlantTypes.Add(plantType);
+                }
+
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "CreateByList", plantTypes);
+
+                return createdPlantTypes;
+            }
+            catch (Exception)
+            {
+                return new List<PlantType>();
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
+        }
+
+        // ------------------------------------
+        // R - READ Operations
+        // ------------------------------------
+
+        /// <summary>
+        /// Retrieves a single plant type entity by its primary key ID.
+        /// </summary>
+        /// <param name="id">The ID of the plant type to retrieve.</param>
+        /// <returns>A Task that returns the found <see cref="PlantType"/> or <c>null</c> if it does not exist or the ID is invalid.</returns>
+        public async Task<PlantType> GetById(int id)
+        {
+            if(id<= 0)
+            {
+                return null;
+            }
+
+            _logger.StartTimer();
+
+            try
+            {
+                PlantType? plantTypeFromContext = await TryExecuteAsync(async () => await _context.PlantTypes.FindAsync(id), "FindAsync", "GetById", null);
+
+                if (plantTypeFromContext == null)
+                {
+                    return null;
+                }
+
+                return plantTypeFromContext;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
+        }
+        /// <inheritdoc/>
+        public async Task<List<PlantType>> GetAll()
+        {
+            _logger.StartTimer();
+
+            try
+            {
+                List<PlantType>? plantTypesFromContext = await TryExecuteAsync(async () => await _context.PlantTypes.ToListAsync(), "ToListAsync", "GetAll", null);
+                
+                if (plantTypesFromContext.IsNullOrEmpty())
+                {
+                    return new List<PlantType>();
+                }
+
+                return plantTypesFromContext;
+            }
+            catch (Exception)
+            {
+                return new List<PlantType>();
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
+        }
+        /// <inheritdoc/>
+        public async Task<List<PlantType>> GetByListOfIds(List<int> ids)
+        {
+            if(ids.IsNullOrEmpty())
+            {
+                return new List<PlantType>();
+            }
+
+            _logger.StartTimer();
+
+            try
+            {
+                List<PlantType>? plantTypesFromContext = await TryExecuteAsync(async () => await _context.PlantTypes.Where(pt => ids.Contains(pt.Id)).ToListAsync(), "Where/ToListAsync", "GetByListOfIds", ids);
+                
+                if (plantTypesFromContext.IsNullOrEmpty())
+                {
+                    return new List<PlantType>();
+                }
+
+                return plantTypesFromContext!;
+            }
+            catch (Exception)
+            {
+                return new List<PlantType>();
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
+        }
+
+        // ------------------------------------
+        // U - UPDATE Operations
+        // ------------------------------------
+
+        /// <summary>
+        /// Updates an existing plant type entity in the database.
+        /// </summary>
+        /// <param name="plantType">The <see cref="PlantType"/> entity including the new parameters for the update (ID must be valid).</param>
+        /// <returns>A Task that returns the updated <see cref="PlantType"/> entity from the database, or <c>null</c> if the entity was not found or the update fails.</returns>
+        public async Task<PlantType?> Update(PlantType plantType)
+        {
+            if(plantType == null)
+            {
+                return null;
+            }
+            _logger.StartTimer();
+
+            try
+            {
+                Plant? plantFromContext = await TryExecuteAsync(async () => await _context.Plants.FindAsync(plantType.Id), "FindAsync", "Upadate", plantType);
+                if (plantFromContext == null)
+                {
+                    return null;
+                }
+
+                plantFromContext.UpdatePlant(plantFromContext);
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "Update", plantType);
+
+                return plantFromContext.PlantType;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
+        }
+        /// <inheritdoc/>
+        public async Task<List<PlantType>> UpdateByList(List<PlantType> plantTypes)
+        {
+            _logger.StartTimer();
+
+            try
+            {
+                List<PlantType> plantTypesFromContext = new List<PlantType>();
+
+                PlantType? plantTypeFromContext;
 
                 foreach (var plantType in plantTypes)
                 {
-                    _context.PlantTypes.Add(plantType);
+                    plantTypeFromContext = await TryExecuteAsync(async () => await _context.PlantTypes.FindAsync(plantType.Id), "FindAsync", "UpdateByList", plantType);
+                    if (plantTypeFromContext != null)
+                    {
+                        plantTypeFromContext.Update(plantType);
+                        plantTypesFromContext.Add(plantTypeFromContext);
+                    }
                 }
-
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "PlantTypes", "created", plantTypes);
-            }
-
-            return plantTypes;
-        }
-
-        public async Task<PlantType> GetById(int id)
-        {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            PlantType plantTypeFromDb = _context.PlantTypes.Find(id);
-
-            LogOperationTime(stopwatch, "PlantType", "queried", plantTypeFromDb);
-
-            return plantTypeFromDb;
-        }
-        public async Task<List<PlantType>> GetAll()
-        {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            List<PlantType> plantTypesFromDb = _context.PlantTypes.ToList();
-
-            LogOperationTime(stopwatch, "PlantTypes", "queried", plantTypesFromDb);
-
-            return plantTypesFromDb;
-        }
-        public async Task<List<PlantType>> GetByListOfIds(List<int> ids)
-        {
-            List<PlantType> plantTypesFromDb = new List<PlantType>();
-
-            PlantType? plantType;
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            foreach (int id in ids)
-            {
-                plantType = _context.PlantTypes.Find(id);
-
-                if(plantType != null)
+                if(plantTypesFromContext.IsNullOrEmpty())
                 {
-                    plantTypesFromDb.Add(plantType);
+                    return new List<PlantType>();
                 }
-            }
 
-            if (plantTypesFromDb.Count > 0)
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "UpdateByList", plantTypesFromContext);
+
+                return plantTypesFromContext;
+            }
+            catch (Exception)
             {
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "PlantTypes", "queried", plantTypesFromDb);
+                return new List<PlantType>();
             }
-
-            return plantTypesFromDb;
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
 
-        public async Task<PlantType> Update(PlantType plantType)
+        // ------------------------------------
+        // D - DELETE Operations
+        // ------------------------------------
+
+        /// <summary>
+        /// Deletes a plant type entity from the database based on its ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the plant type.</param>
+        /// <returns>A Task that returns the deleted <see cref="PlantType"/> entity, or <c>null</c> if the entity was not found or deletion fails.</returns>
+        public async Task<PlantType?> Delete(int id)
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            PlantType plantTypeFromDb = _context.PlantTypes.Find(plantType.Id);
-
-            if (plantTypeFromDb == null)
+            if (id <= 0)
             {
-                plantTypeFromDb.Update(plantType);
-
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "PlantType", "updated", plantTypeFromDb);
+                return null;
             }
 
-            return plantTypeFromDb;
-        }
-        public async Task<List<PlantType>> UpdateByList(List<PlantType> list)
-        {
-            List<PlantType> plantTypesFromDb = new List<PlantType>();
+            _logger.StartTimer();
 
-            PlantType? plantTypeFromDb;
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            foreach (var plantType in list)
+            try
             {
-                plantTypeFromDb = _context.PlantTypes.Find(plantType.Id);
-                
-                if(plantTypeFromDb != null)
+                PlantType? plantTypeFromContext = await TryExecuteAsync(async () => await _context.PlantTypes.FindAsync(id), "FindAsync", "Delete", id);
+                if (plantTypeFromContext == null)
                 {
-                    plantTypeFromDb.Update(plantType);
-                    
-                    plantTypesFromDb.Add(plantTypeFromDb);
+                    return null;
                 }
-            }
+                _context.PlantTypes.Remove(plantTypeFromContext);
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "Delete", plantTypeFromContext);
 
-            if(plantTypesFromDb.Count > 0)
+                return plantTypeFromContext;
+            }
+            catch (Exception)
             {
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "PlantTypes", "updated", plantTypesFromDb);
+                return null;
             }
-            return plantTypesFromDb;
-        }
-
-        public async Task<PlantType> DeleteById(int id)
-        {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            PlantType plantTypeFromDb = _context.PlantTypes.Find(id);
-
-            if (plantTypeFromDb == null)
+            finally
             {
-                _context.PlantTypes.Remove(plantTypeFromDb);
-
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "PlantType", "deleted", plantTypeFromDb);
+                _logger.StopTimer();
             }
-
-            return plantTypeFromDb;
         }
+        /// <inheritdoc/>
         public async Task<List<PlantType>> DeleteAll()
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            _logger.StartTimer();
 
-            List<PlantType> plantTypesFromDb = _context.PlantTypes.ToList();
-
-            if (plantTypesFromDb.Count > 0)
+            try
             {
-                _context.RemoveRange(plantTypesFromDb);
+                List<PlantType>? plantTypesFromContext = await TryExecuteAsync(async () => await _context.PlantTypes.ToListAsync(), "ToListAsync", "DeleteAll", null);
+                if(plantTypesFromContext.IsNullOrEmpty())
+                {
+                    return new List<PlantType>();
+                }
 
-                SaveChanges();
+                _context.PlantTypes.RemoveRange(plantTypesFromContext);
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "DeleteAll", plantTypesFromContext);
 
-                LogOperationTime(stopwatch, "PlantTypes", "deleted", plantTypesFromDb);
+                return plantTypesFromContext;
             }
-
-            return plantTypesFromDb;
+            catch (Exception)
+            {
+                return new List<PlantType>();
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
         }
+        /// <inheritdoc/>
         public async Task<List<PlantType>> DeleteByListOfIds(List<int> ids)
         {
-            List<PlantType> plantTypesFromDb =  new List<PlantType>();
+            _logger.StartTimer();
 
-            PlantType plantTypeFromDb;
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            foreach (int id in ids)
+            try
             {
-                plantTypeFromDb = _context.PlantTypes.Find(id);
+                List<PlantType>? plantTypesFromContext = await TryExecuteAsync(async () => await _context.PlantTypes.Where(pt => ids.Contains(pt.Id)).ToListAsync(), "Where/ToListAsync", "DeleteByListOfIds", null);
 
-                plantTypesFromDb.Add(plantTypeFromDb);
-             }
+                if (plantTypesFromContext.IsNullOrEmpty())
+                {
+                    return new List<PlantType>();
+                }
 
-            if(plantTypesFromDb.Count > 0)
-            {
-                _context.RemoveRange(plantTypesFromDb);
+                _context.PlantTypes.RemoveRange(plantTypesFromContext);
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "DeleteByListOfIds", plantTypesFromContext);
 
-                SaveChanges();
-
-                LogOperationTime(stopwatch, "PlantTypes", "deleted", plantTypesFromDb);
+                return plantTypesFromContext;
             }
-
-            return plantTypesFromDb;
+            catch (Exception)
+            {
+                return new List<PlantType>();
+            }
         }
     }
 }

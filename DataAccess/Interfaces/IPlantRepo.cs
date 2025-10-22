@@ -2,7 +2,7 @@
 
 namespace DataAccess.Interfaces
 {
-    public interface IPlantTypeRepo : IRepo<PlantType>
+    public interface IPlantRepo : IRepo<Plant>
     {
     }
 }

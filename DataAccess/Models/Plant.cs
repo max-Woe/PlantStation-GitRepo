@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
+using PlantStationHelperService;
+
 namespace DataAccess.Models
 {
     /// <summary>
@@ -41,6 +43,11 @@ namespace DataAccess.Models
         {
             Name = plant.Name;
             PlantType = plant.PlantType;
+        }
+
+        public override string ToString()
+        {
+            return $"Plant: {Id}, Name: {Name}, PlantType: {PlantType?.Name}, Characteristics: {ListExtensions.ToDelimitedString(PlantCharacteristics)}";
         }
     }
 }

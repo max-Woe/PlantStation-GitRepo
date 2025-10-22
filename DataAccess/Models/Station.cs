@@ -43,4 +43,9 @@ public class Station
         Location = station.Location;
         SensorsCount = station.SensorsCount;
     }
+
+    public override string ToString()
+    {
+        return $"Id: {Id}, MacAddress: {MacAddress}, Location: {Location}, SensorsCount: {SensorsCount}, CreatedAt: {CreatedAt}";
+    }
 }

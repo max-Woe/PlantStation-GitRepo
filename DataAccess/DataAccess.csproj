@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>164a2449-99d4-4a9c-a321-d056f001354e</UserSecretsId>
   </PropertyGroup>
 	
 	<ItemGroup>
@@ -19,5 +20,6 @@
 	
 	<ItemGroup>
 	  <ProjectReference Include="..\LoggingService\LoggingService.csproj" />
+	  <ProjectReference Include="..\PlantStationHelperService\PlantStationHelperService.csproj" />
 	</ItemGroup>
 </Project>

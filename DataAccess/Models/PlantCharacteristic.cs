@@ -17,5 +17,10 @@ namespace DataAccess.Models
         /// Gets or sets the name.
         /// </summary>
         public string Name { get; set; }
+
+        public override string ToString()
+        {
+            return $"Id = {Id}, Name = {Name}";
+        }
     }
 }

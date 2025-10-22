@@ -37,5 +37,10 @@ namespace DataAccess.Models
         ///Gets or sets the french plant name.
         ///</summary>
         public string? NameFr { get; set; }
+
+        public override string ToString()
+        {
+            return $"Id = {Id}, NameSci = {NameSci}, NameEng = {NameEng}, NameSp = {NameSp}, NameGer = {NameGer}, NameFr = {NameFr}";
+        }
     }
 }

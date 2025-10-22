@@ -69,4 +69,9 @@ public class Measurement
         SensorIdReference = measurement.SensorIdReference;
         RecordedAt = measurement.RecordedAt;
     }
+
+    public override string ToString()
+    {
+        return $"Measurement(Id={Id}, Value={Value}, Unit={Unit}, Type={Type}, SensorId={SensorId}, SensorIdReference={SensorIdReference}, RecordedAt={RecordedAt}, CreatedAt={CreatedAt})";
+    }
 }
