@@ -15,15 +15,14 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = "Server=192.168.178.75;Database=plantstationdatabase;Username=maxpowa;Password=Marianne1967;";
-//var connectionString = "Server=localhost\\SQLEXPRESS;Database=plantstationdatabase;Trusted_Connection=True;TrustServerCertificate=True;";// Environment.GetEnvironmentVariable("MSSM_CONN_STRING");//"Server = localhost\\SQLEXPRESS; Database = plantStationdb; Trusted_Connection = True;";//
-Console.WriteLine("!!!! AKTUELLER CONNECTION STRING: " + connectionString);
+var connectionString = builder.Configuration["ConnectionString:PlantStationDbRaspi"];
+if (string.IsNullOrEmpty(connectionString))
+{
+    Console.WriteLine("!!!! FEHLER: Der Verbindungsstring 'PlantStationDbRaspi' wurde nicht in der Konfiguration gefunden.");
+    throw new InvalidOperationException("Der erforderliche Verbindungsstring fehlt.");
+}
 
-//// Für SQL Server muss hier UseSqlServer stehen!
-//builder.Services.AddDbContext<ApiContext>(opt =>
-//    opt.UseSqlServer(connectionString));
-
-builder.Services.AddDbContext<ApiContext>(opt =>
+builder.Services.AddDbContext<IApiContext, ApiContext>(opt =>
     opt.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<ILoggingService, SeriLoggingService>();
