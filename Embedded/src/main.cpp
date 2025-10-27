@@ -53,22 +53,24 @@ void setup()
     {
         Serial.println("Queue erfolgreich erstellt.");
 
-        xTaskCreate(
+        xTaskCreatePinnedToCore(
             measurementTask,
             "Sensor Task",
             4096,
             NULL,
             1,
-            NULL
+            NULL,
+            1
         );
 
-        xTaskCreate(
+        xTaskCreatePinnedToCore(
             sendingTask, 
             "Sending Task", 
             8192,
             NULL, 
             2,
-            NULL
+            NULL,
+            0
         );
     } 
     else 

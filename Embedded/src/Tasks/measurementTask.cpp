@@ -22,6 +22,7 @@ DHT dht(dhtPin, DHT22);
 void measurementTask(void* parameter)
 {
     int counter = 1;
+    int counter_max_1s = 100;
     int counter_runs = 1;
 
     const char* type_temperature = "temperature";
@@ -36,33 +37,53 @@ void measurementTask(void* parameter)
 
     float tempReadings[60];
     float humReadings[60];
-    float soilReadings[60];
+    float soilReadings_60s[60];
+    float soilReadings_1s[100];
     float waterReadings[60];
 
     dht.begin();
 
     struct tm timeinfo;
-    
+    TickType_t xLastWakeTime;
     while (true) 
     {
+        const TickType_t xFrequency = pdMS_TO_TICKS(1000);
+
+        xLastWakeTime = xTaskGetTickCount();
+
         float temp = dht.readTemperature();
         float hum = dht.readHumidity();
-        int soil_analog = analogRead(soilMoisturePin);
-        // int water_analog = analogRead(WATER_LEVEL_PIN);
+        
+        for(int i = 0; i<100; i++) 
+        {
+            int soil_analog = analogRead(soilMoisturePin);
 
-        float soil =  map(soil_analog, soil_analog_dry, soil_analog_wet, 0, 100);
-        // float water =  map(water_analog, 300, 2100, 0, 100);
 
-        float temp_mean;
-        float hum_mean;
-        float soil_mean;
-        // float water_mean;
+            soilReadings_1s[i] = soil_analog;
+        }
 
+        int soil_mean_1s = Math::mean(soilReadings_1s, counter_max_1s);
+
+        float soil =  map(soil_mean_1s, soil_analog_dry, soil_analog_wet, 0, 100);
+        
+        float temp_mean_60s;
+        float hum_mean_60s;
+        float soil_mean_60s;
+        
         tempReadings[counter-1] = temp;
         humReadings[counter-1] = hum;
-        soilReadings[counter-1] = soil;
-        // waterReadings[counter] = water;
-
+        soilReadings_60s[counter-1] = soil;
+        
+        #ifdef DEBUGMODE
+        {
+            Serial.print("Soil (Pin " + String(soilMoisturePin) + "): ");
+            for(int i = 0; i < counter; i++) 
+            {
+                Serial.print(soilReadings_60s[i]);
+                Serial.print(" ");
+            }
+        }
+        #endif
         if(counter >= 60) 
         { 
             Serial.println();
@@ -76,7 +97,7 @@ void measurementTask(void* parameter)
             Serial.println("Start Measurement processing...");
 
             time_t current_timestamp = mktime(&timeinfo);
-            temp_mean = Math::mean(tempReadings, counter);
+            temp_mean_60s = Math::mean(tempReadings, counter);
 
             Serial.println(counter);
             for (int i = 0; i < 60; i++) 
@@ -84,12 +105,11 @@ void measurementTask(void* parameter)
                 Serial.println(tempReadings[i]);
             }
 
-            Serial.println("-----------------Temp mean calculated.----------------" + String(temp_mean));
+            Serial.println("-----------------Temp mean calculated.----------------" + String(temp_mean_60s));
 
-            hum_mean = Math::mean(humReadings, counter);
-            soil_mean = Math::mean(soilReadings, counter);
-            // water_mean = Math::mean(waterReadings);
-
+            hum_mean_60s = Math::mean(humReadings, counter);
+            soil_mean_60s = Math::mean(soilReadings_60s, counter);
+            
             #ifdef DEBUGMODE
             {
                 Serial.println("--------------------------------------------------------------");
@@ -100,29 +120,18 @@ void measurementTask(void* parameter)
                 Serial.print("Aktueller Zeitstempel: ");
                 Serial.println(current_timestamp);
                 
-                /*/
-                Serial.print("Wasserstand (Analog): ");
-                Serial.println(water_analog);
-                Serial.print("Wasserstand (%): ");
-                Serial.println(water);
-                Serial.println();
-
-                Serial.print("Bodenfeuchtigkeit (Analog): ");
-                Serial.println(soil_analog);
-                */
-                
                 Serial.print(String(type_soil) +" (Pin:"+ String(soilMoisturePin) + "): ");
-                Serial.print(soil_mean);
+                Serial.print(soil_mean_60s);
                 Serial.println(" " + String(unit_soil));
                 Serial.println();
                 
                 Serial.print(String(type_temperature) +" (Pin:"+ String(dhtPin) + "):");
-                Serial.print(temp_mean);
+                Serial.print(temp_mean_60s);
                 Serial.println(" " + String(unit_temperature));
                 Serial.println();
 
                 Serial.print(String(type_humidity) +" (Pin:"+ String(dhtPin) + "): ");
-                Serial.print(hum_mean);
+                Serial.print(hum_mean_60s);
                 Serial.println(" " + String(unit_humidity));
                 Serial.println();
             
@@ -135,15 +144,15 @@ void measurementTask(void* parameter)
             #endif
 
 
-            Measurement temperature_measurement(current_timestamp, temp_mean, unit_temperature, type_temperature, dhtPin, macAddress);
+            Measurement temperature_measurement(current_timestamp, temp_mean_60s, unit_temperature, type_temperature, dhtPin, macAddress);
             xQueueSend(sendingQueue, &temperature_measurement, portMAX_DELAY);
             Serial.println("Temperature measurement queued.");
 
-            Measurement humidity_measurement(current_timestamp, hum_mean, unit_humidity, type_humidity, dhtPin, macAddress);
+            Measurement humidity_measurement(current_timestamp, hum_mean_60s, unit_humidity, type_humidity, dhtPin, macAddress);
             xQueueSend(sendingQueue, &humidity_measurement, portMAX_DELAY);
             Serial.println("Humidity measurement queued.");
             
-            Measurement soil_measurement(current_timestamp, soil_mean, unit_soil, type_soil, soilMoisturePin, macAddress);
+            Measurement soil_measurement(current_timestamp, soil_mean_60s, unit_soil, type_soil, soilMoisturePin, macAddress);
             xQueueSend(sendingQueue, &soil_measurement, portMAX_DELAY);
 
             Serial.println("Measurement processing done.");
@@ -168,6 +177,6 @@ void measurementTask(void* parameter)
         }
         #endif
 
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 };
