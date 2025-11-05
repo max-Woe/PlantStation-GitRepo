@@ -217,27 +217,28 @@ namespace DataAccess.Repositories
                 List<Plant> plantsFromDb = new List<Plant>();
                 Plant? plantFromContext;
 
-                foreach (Plant plant in plants)
-                {
-                    plantFromContext = await TryExecuteAsync(async () => await _context.Plants.FindAsync(plant.Id), "FindAsync", "UpdateByList", plant);
+                List<int> plantIds = plants.Select(p => p.Id).ToList();
 
-                    if (plantFromContext != null)
+                plantsFromDb = await TryExecuteAsync(async () => await _context.Plants.Where(p => plantIds.Contains(p.Id)).ToListAsync(), "ToListAsync", "UpdateByList", null);
+
+                Dictionary<int,Plant> plantDict = plantsFromDb.ToDictionary(p => p.Id, p => p);
+
+                foreach (Plant plant in plantsFromDb)
+                {
+                    if(plantDict.TryGetValue(plant.Id, out Plant? plantToUpdate))
                     {
-                        plantFromContext.UpdatePlant(plant);
-                        plantsFromDb.Add(plantFromContext);
+                        plant.UpdatePlant(plantToUpdate);
                     }
                 }
 
-                if (plantsFromDb.Count > 0)
-                {
-                    await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "UpdateByList", null);
-
-                    return plantsFromDb;
-                }
-                else
+                if (plantsFromDb.Count <= 0)
                 {
                     return new List<Plant>();
                 }
+
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "UpdateByList", null);
+
+                return plantsFromDb;
             }
             catch (Exception)
             {
@@ -299,22 +300,25 @@ namespace DataAccess.Repositories
             try
             {
                 List<Plant> plantsFromContext = new List<Plant>();
-                foreach (int id in ids)
-                {
-                    if (id != 0)
-                    {
-                        Plant plantFromContext = await TryExecuteAsync(async () => await _context.Plants.FindAsync(id), "FindAsync", "DeleteByListOfIds", null);
-                        if (plantFromContext == null)
-                        {
-                            plantsFromContext.Add(plantFromContext);
-                        }
-                    }                    
-                }
 
-                if (plantsFromContext.Count == 0)
+                plantsFromContext = await TryExecuteAsync(
+                    async () => await _context.Plants.Where(p => ids.Contains(p.Id)).ToListAsync(), 
+                    "Where-Contains-ToListAsync", 
+                    "DeleteByListOfIds", 
+                    null);
+
+                if (plantsFromContext.Count <= 0)
                 {
                     return new List<Plant>();
                 }
+
+                await TryExecuteAsync(async () => 
+                {
+                    _context.Plants.RemoveRange(plantsFromContext);
+                    return Task.FromResult<object>(null);
+                }, "RemoveRange", "DeleteByListOfIds", null);
+
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChanges", "DeleteByListOfIds", null);
 
                 return plantsFromContext;
             }
@@ -334,14 +338,19 @@ namespace DataAccess.Repositories
 
             try
             {
-                List<Plant> plantsFromContext = await TryExecuteAsync(async() => await _context.Plants.ToListAsync(), "ToListAsync", "DeleteAll", null);
+                List<Plant>? plantsFromContext = await TryExecuteAsync(async() => await _context.Plants.ToListAsync(), "ToListAsync", "DeleteAll", null);
 
-                if(plantsFromContext == null || plantsFromContext.Count == 0)
+                if(plantsFromContext.IsNullOrEmpty())
                 {
                     return new List<Plant>();
                 }
 
-                _context.Plants.RemoveRange(plantsFromContext);
+
+                await TryExecuteAsync(async () =>
+                {
+                    _context.Plants.RemoveRange(plantsFromContext);
+                    return Task.FromResult<object>(null);
+                }, "RemoveRange", "DeleteByListOfIds", null);
 
                 await TryExecuteAsync(async() => await _context.SaveChangesAsync(), "SaveChanges", "DeleteAll", null);
 

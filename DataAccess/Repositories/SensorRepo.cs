@@ -388,14 +388,21 @@ namespace DataAccess.Repositories
             List<Sensor> sensorsFromDb = new List<Sensor>();
             try
             {
-                foreach (Sensor sensor in sensors)
+                sensorsFromDb =  await TryExecuteAsync(async () => await _context.Sensors.ToListAsync(), "ToListAsync", "UpdateByList", sensors);
+
+                if(sensorsFromDb.IsNullOrEmpty())
                 {
-                    Sensor? sensorFromDb = await TryExecuteAsync(async() => await _context.Sensors.FindAsync(sensor.Id), "FindAsync", "Update", sensor);
-                    if( sensorFromDb != null )
+                    return new List<Sensor>();
+                }
+
+                Dictionary<int,Sensor> sensorDict = sensors.ToDictionary(s => s.Id, s=>s);
+
+                foreach (Sensor sensor in sensorsFromDb)
+                {
+                    if(sensorDict.TryGetValue(sensor.Id, out Sensor? existingSensor))
                     {
-                        sensorFromDb.Update(sensor);
-                        sensorsFromDb.Add(sensorFromDb);
-                    }                    
+                        existingSensor.Update(sensor);
+                    }            
                 }
 
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "UpdateByList", sensors);

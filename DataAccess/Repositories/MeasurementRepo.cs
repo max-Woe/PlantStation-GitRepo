@@ -30,9 +30,9 @@ namespace DataAccess.Repositories
                 return null;
             }
 
-            Sensor? sensor = await EnsureSensorExisting(measurement, null);
-
             _logger.StartTimer();
+
+            Sensor? sensor = await EnsureSensorExisting(measurement, null);
 
             try
             {
@@ -41,7 +41,7 @@ namespace DataAccess.Repositories
 
                 return measurement;
             }
-            catch (Exception ex)
+            catch
             {
                 return null;
             }
@@ -58,9 +58,9 @@ namespace DataAccess.Repositories
                 return null;
             }
 
-            await EnsureSensorExisting(measurement, macAddress);
-
             _logger.StartTimer();
+
+            await EnsureSensorExisting(measurement, macAddress);
 
             try
             {
@@ -101,8 +101,13 @@ namespace DataAccess.Repositories
                 {
                     await EnsureSensorExisting(measurement, null);
 
-                    await TryExecuteAsync(async () => await _context.Measurements.AddAsync(measurement), "AddAsync", "Create", measurement);
                 }
+
+                await TryExecuteAsync<int>(async () =>
+                {
+                    await _context.Measurements.AddRangeAsync(measurements);
+                    return measurements.Count;
+                }, "AddRangeAsync", "Create", measurements);
 
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "Create", measurements);
 
@@ -229,19 +234,11 @@ namespace DataAccess.Repositories
             
             try
             {
-                foreach (int id in ids)
+                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => ids.Contains(m.Id) ).ToListAsync(), "Find.Where", "GetByListOfIds");
+
+                if(measurementsFromDb.IsNullOrEmpty())
                 {
-                    Measurement? measurement = await TryExecuteAsync(async () => await _context.Measurements.FindAsync(id), "FindAsync", "GetByListOfIds");
-
-                    if (measurement == null)
-                    {
-                        _logger.LogInformationText($"Measurement with Id {id} not found in database.");
-                    }
-                    else
-                    {
-                        measurementsFromDb.Add(measurement);
-                    }
-
+                    return new List<Measurement>();
                 }
 
                 return measurementsFromDb;
@@ -294,15 +291,9 @@ namespace DataAccess.Repositories
 
             try
             {
-                var measurementsQuery = _context.Measurements.AsNoTracking().Where(m => m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt).Take(count);
-
-                var sqlQuery = measurementsQuery.ToQueryString();
-
-                _logger.LogInformationText($"Executing SQL Query: {sqlQuery}");
-
-                measurementsFromDb = await TryExecuteAsync(async () => await measurementsQuery.ToListAsync(), "ToListAsync", "GetLast");
+                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.Id == sensorId).OrderByDescending(m => m.RecordedAt).Take(count).ToListAsync(), "ToListAsync", "GetLast");
                 
-                if(measurementsFromDb == null || measurementsFromDb.Count == 0)
+                if(measurementsFromDb.IsNullOrEmpty())
                 {
                     _logger.StopTimer();
                     return new List<Measurement>();
@@ -329,13 +320,7 @@ namespace DataAccess.Repositories
 
             try
             {
-                var measurementsQuery = _context.Measurements.Where(m=> m.RecordedAt>since && m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt);
-
-                var sqlQuery = measurementsQuery.ToQueryString();
-
-                _logger.LogInformationText($"Executing SQL Query: {sqlQuery}");
-
-                measurementsFromDb = await TryExecuteAsync(async () => await measurementsQuery.ToListAsync(), "ToListAsync", "GetLast");
+                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m=> m.RecordedAt>since && m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt).ToListAsync(), "ToListAsync", "GetLast");
                 
                 if(measurementsFromDb == null || measurementsFromDb.Count == 0)
                 {
@@ -408,22 +393,31 @@ namespace DataAccess.Repositories
                 return new List<Measurement>();
             }
 
-            List<Measurement> measurementsFromDb = new List<Measurement>();
+            List<Measurement>? measurementsFromDb = new List<Measurement>();
             Measurement? measurementFromDb;
 
             _logger.StartTimer();
 
             try
             {
-                foreach (Measurement measurement in measurements)
-                {
-                    measurementFromDb = await TryExecuteAsync(async () => await _context.Measurements.FindAsync(measurement.Id), "FindAsync", "UpdateByList", measurement);
+                measurementsFromDb = await TryExecuteAsync(
+                    async () => await GetByListOfIds(measurements.Select(m => m.Id).ToList()), 
+                    "GetByListOfIds", 
+                    "UpdateByList", 
+                    measurements);
                 
-                    if (measurementFromDb != null)
-                    {
-                        measurementFromDb.Update(measurement);
+                if (measurementsFromDb.IsNullOrEmpty())
+                {
+                    return new List<Measurement>();
+                }
 
-                        measurementsFromDb.Add(measurementFromDb);
+                Dictionary<int,Measurement>? measurementsDict = measurements.ToDictionary(m => m.Id, m=>m);
+
+                foreach (var measurement in measurementsFromDb)
+                {
+                    if(measurementsDict.TryGetValue(measurement.Id, out var existingMeasurement))
+                    {
+                        measurement.Update(existingMeasurement);
                     }
                 }
 
@@ -473,7 +467,9 @@ namespace DataAccess.Repositories
                     _context.Measurements.Remove(measurementFromDb);
                     return Task.FromResult<object>(null);
                 }, "Remove", "DeleteById", id);
+
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChanges", "DeleteById", id);
+
                 return measurementFromDb;
             }
             catch (Exception)
@@ -494,11 +490,14 @@ namespace DataAccess.Repositories
         {
             _logger.StartTimer();
             
-            List<Measurement> measurementsFromDb = new List<Measurement>();
+            List<Measurement>? measurementsFromDb = new List<Measurement>();
 
             try
             {
-                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.ToListAsync(), "ToListAsync", "DeleteAll");
+                measurementsFromDb = await TryExecuteAsync(
+                    async () => await _context.Measurements.ToListAsync(), 
+                    "ToListAsync", 
+                    "DeleteAll");
 
                 if (measurementsFromDb.IsNullOrEmpty())
                 {
@@ -528,15 +527,21 @@ namespace DataAccess.Repositories
         public async Task<List<Measurement>> DeleteMeasurmentsBySensorId(int sensorId)
         {
             _logger.StartTimer();
-            List<Measurement> measurementsFromDb = new List<Measurement>();
+            List<Measurement>? measurementsFromDb = new List<Measurement>();
             try
             {
 
-                measurementsFromDb = await TryExecuteAsync(async() => await _context.Measurements.Where(m => m.SensorId == sensorId).ToListAsync(), "ToListAsync", "DeleteMeasurmentsBySensorId", null);
+                measurementsFromDb = await TryExecuteAsync(
+                    async() => await _context.Measurements.Where(m => m.SensorId == sensorId).ToListAsync(), 
+                    "ToListAsync", 
+                    "DeleteMeasurmentsBySensorId", 
+                    null);
+
                 if (measurementsFromDb.IsNullOrEmpty())
                 {
                     return measurementsFromDb!;
                 }
+
                 await TryExecuteAsync<object>(() =>
                 {
                     _context.Measurements.RemoveRange(measurementsFromDb);
