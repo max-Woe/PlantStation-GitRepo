@@ -228,18 +228,22 @@ namespace DataAccess.Repositories
             try
             {
                 List<PlantType> plantTypesFromContext = new List<PlantType>();
+                List<int> plantTypeIds = plantTypes.Select(pt => pt.Id).ToList();
 
                 PlantType? plantTypeFromContext;
 
-                foreach (var plantType in plantTypes)
+                plantTypesFromContext = await TryExecuteAsync(async () => await _context.PlantTypes.Where(pt => plantTypeIds.Contains(pt.Id)).ToListAsync(), "Where/ToListAsync", "UpdateByList", plantTypes);
+
+                Dictionary<int, PlantType> plantTypeDict = plantTypes.ToDictionary(p=>p.Id, p=>p);
+
+                foreach (var plantType in plantTypesFromContext)
                 {
-                    plantTypeFromContext = await TryExecuteAsync(async () => await _context.PlantTypes.FindAsync(plantType.Id), "FindAsync", "UpdateByList", plantType);
-                    if (plantTypeFromContext != null)
+                    if(plantTypeDict.TryGetValue(plantType.Id, out var updatedPlantType))
                     {
-                        plantTypeFromContext.Update(plantType);
-                        plantTypesFromContext.Add(plantTypeFromContext);
+                        plantType.Update(updatedPlantType);
                     }
                 }
+
                 if(plantTypesFromContext.IsNullOrEmpty())
                 {
                     return new List<PlantType>();
@@ -311,7 +315,12 @@ namespace DataAccess.Repositories
                     return new List<PlantType>();
                 }
 
-                _context.PlantTypes.RemoveRange(plantTypesFromContext);
+                await TryExecuteAsync<object>(() =>
+                {
+                    _context.PlantTypes.RemoveRange(plantTypesFromContext);
+                    return Task.FromResult<object>(null);
+                }, "RemoveRange", "DeleteByListOfIds");
+
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "DeleteAll", plantTypesFromContext);
 
                 return plantTypesFromContext;
@@ -339,7 +348,13 @@ namespace DataAccess.Repositories
                     return new List<PlantType>();
                 }
 
-                _context.PlantTypes.RemoveRange(plantTypesFromContext);
+
+                await TryExecuteAsync<object>(() =>
+                {
+                    _context.PlantTypes.RemoveRange(plantTypesFromContext);
+                    return Task.FromResult<object>(null);
+                }, "RemoveRange", "DeleteByListOfIds");
+
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "DeleteByListOfIds", plantTypesFromContext);
 
                 return plantTypesFromContext;

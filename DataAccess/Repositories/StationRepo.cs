@@ -250,23 +250,35 @@ namespace DataAccess.Repositories
 
             _logger.StartTimer();
 
+            Station? stationFromContext;
+            List<Station> stationsFromContext = new List<Station>();
+            List<int> stationIds = stations.Select(s => s.Id).ToList();
+
             try
             {
-                Station? stationFromContext;
-                List<Station> stationsFromContext = new List<Station>();
-                foreach (Station station in stations)
+                stationsFromContext = await TryExecuteAsync(
+                    async () => await _context.Stations.Where(s => stationIds.Contains(s.Id)).ToListAsync(), 
+                    "ToListAsync", 
+                    "UpdateStations", 
+                    null);
+
+                if(stationsFromContext.IsNullOrEmpty())
                 {
-                    stationFromContext = await TryExecuteAsync(async () => await _context.Stations.FindAsync(station.Id), "FindAsync", "UpdateStations", station);
-                    if (stationFromContext != null)
+                    return new List<Station>();
+                }
+
+                Dictionary<int,Station> stationDict = stations.ToDictionary(s => s.Id, s=>s);
+
+                foreach (Station station in stationsFromContext)
+                {
+                    if(stationDict.TryGetValue(station.Id, out Station? updatedStation))
                     {
-                        stationFromContext.Update(station);
-                        stationsFromContext.Add(stationFromContext);
+                        station.Update(updatedStation);
                     }
                 }
-                if (stationsFromContext.Count > 0)
-                {
-                    await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "UpdateStations", stationsFromContext);
-                }
+
+                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "UpdateStations", stationsFromContext);
+                
                 return stationsFromContext;
             }
             catch (Exception)
@@ -367,8 +379,15 @@ namespace DataAccess.Repositories
                 {
                     return new List<Station>();
                 }
-                _context.Stations.RemoveRange(stationsFromContext);
+
+                await TryExecuteAsync<object>(() =>
+                {
+                    _context.Stations.RemoveRange(stationsFromContext);
+                    return Task.FromResult<object>(null);
+                }, "RemoveRange", "DeleteByListOfIds");
+
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "DeleteAllStations", stationsFromContext);
+                
                 return stationsFromContext;
             }
             catch (Exception)
@@ -401,7 +420,13 @@ namespace DataAccess.Repositories
                 {
                     return new List<Station>();
                 }
-                _context.Stations.RemoveRange(stationsFromContext);
+
+                await TryExecuteAsync<object>(() =>
+                {
+                    _context.Stations.RemoveRange(stationsFromContext);
+                    return Task.FromResult<object>(null);
+                }, "RemoveRange", "DeleteByListOfIds");
+
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "DeleteByListOfIds", stationsFromContext);
                 return stationsFromContext;
             }
@@ -426,7 +451,13 @@ namespace DataAccess.Repositories
                 {
                     return new List<Station>();
                 }
-                _context.Stations.RemoveRange(stationsFromContext);
+
+                await TryExecuteAsync<object>(() =>
+                {
+                    _context.Stations.RemoveRange(stationsFromContext);
+                    return Task.FromResult<object>(null);
+                }, "RemoveRange", "DeleteByListOfIds");
+
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "DeleteAll", stationsFromContext);
                 return stationsFromContext;
             }

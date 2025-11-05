@@ -42,7 +42,7 @@ namespace DataAccess.Models
 
         public override string ToString()
         {
-            return $"Id = {Id}, Name = {Name}, Description = {Description}, TypeCharacteristicts = {ListExtensions.ToDelimitedString(TypeCharacteristics)}";
+            return $"Id = {Id}, Name = {Name}, Description = {Description}, TypeCharacteristicts = {TypeCharacteristics.ToDelimitedString()}";
         }
     }
 }

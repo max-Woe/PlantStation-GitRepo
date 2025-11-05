@@ -47,20 +47,7 @@ namespace DataAccess.Models
 
         public override string ToString()
         {
-            return $"Plant: {Id}, Name: {Name}, PlantType: {PlantType?.Name}, Characteristics: {ListExtensions.ToDelimitedString(PlantCharacteristics)}";
+            return $"Plant: {Id}, Name: {Name}, PlantType: {PlantType?.Name}, Characteristics: {PlantCharacteristics.ToDelimitedString()}";
         }
     }
 }
-//internal enum PlantCharacteristic
-//{
-//    HighWaterNeeds,
-//    AtypicalLeafColor,
-//    SpontaneousAerialRoots,
-//    FrostTolerance,
-//    RareFlowering,
-//    AsymmetricGrowth,
-//    SlowCaudexResponse,
-//    DeepShadeTolerance,
-//    AbnormalLeafSize,
-//    PestResistance
-//}
