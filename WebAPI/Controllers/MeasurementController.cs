@@ -126,12 +126,13 @@ namespace PlantStationAPI.Backend.Controllers
         [HttpGet]
         public async Task<IActionResult> GetLastOfSensorSince(int sensorId, DateTime since)
         {
+            DateTime utcSince = DateTime.SpecifyKind(since, DateTimeKind.Utc).AddHours(-1);
             if (since <= DateTime.MinValue)
             {
                 return BadRequest("since must be a valid date");
             }
 
-            var result = await _measurementRepo.GetLastOfSensorSince(sensorId, since);
+            var result = await _measurementRepo.GetLastOfSensorSince(sensorId, utcSince);
 
             if (result.IsNullOrEmpty())
             {
