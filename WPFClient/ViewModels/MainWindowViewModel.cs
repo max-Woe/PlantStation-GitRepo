@@ -460,7 +460,7 @@ namespace WPFClient.ViewModels
                 List<Measurement> measurements = MeasurementPlotData.Measurements;
                 double[] yValues = measurements.Select(m => Math.Round(m.Value,0)).ToArray();
 
-                double[] smoothedY = MathService.CalculateMovingAverage(yValues, 60);
+                double[] smoothedY = MathService.CalculateMovingAverage(yValues, 60);//
 
                 System.DateTime[] zeiten = measurements.Select(m => m.RecordedAt.AddHours(2)).ToArray();
                 double[] xAchseWerte = zeiten.Select(dt => dt.ToOADate()).ToArray();

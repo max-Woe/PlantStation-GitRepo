@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using DataAccess.Models;
+using LoggingService;
 
 using ConverterService;
 
@@ -18,6 +19,7 @@ namespace WPFClient
     {
         private readonly HttpClient _httpClient;
         private readonly HttpClientHandler _httpHandler;
+        private SeriLoggingService _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ApiClient"/> class.
@@ -31,6 +33,7 @@ namespace WPFClient
             _httpHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
             _httpClient = new HttpClient(_httpHandler);
             _httpClient.BaseAddress = new Uri("https://localhost:7028/api");
+            _logger = new SeriLoggingService();
         }
 
         /// <summary>
@@ -41,7 +44,7 @@ namespace WPFClient
         /// <param name="timeSpan">The number of measurements/time unit to retrieve (used if <paramref name="since"/> is null).</param>
         /// <param name="since">Optional parameter specifying the starting <see cref="DateTime"/> for data retrieval. If provided, overrides <paramref name="timeSpan"/>.</param>
         /// <returns>A Task that returns the raw JSON response body string, or <c>null</c> if an error occurs.</returns>
-        public async Task<string?> GetMeasurementsFromApiAsyncAsString(string endpoint, int sensorId, int timeSpan, DateTime? since = null)
+        public async Task<string?> GetMeasurementsFromApiAsyncAsString(string endpoint, int sensorId, int timeSpan = 0, DateTime? since = null)
         {
             if (since == null)
             {
@@ -60,11 +63,12 @@ namespace WPFClient
                 response.EnsureSuccessStatusCode(); 
 
                 string responseBody = await response.Content.ReadAsStringAsync();
+                _logger.LogSuccess("GetMeasurementsFromApiAsyncAsString", "", null);
                 return responseBody;
             }
-            catch (HttpRequestException e)
+            catch (HttpRequestException ex)
             {
-                Console.WriteLine($"Anfragefehler: {e.Message}");
+                _logger.LogError(ex, "GetMeasurementsFromApiAsyncAsString", "GetAllStationIdsFromApiAsync", null);
                 return null;
             }
         }
@@ -113,11 +117,13 @@ namespace WPFClient
                 string responseBodyString = await response.Content.ReadAsStringAsync();
                 List<int> responseBody = await EntityConverter.ConvertStringToListOfEntities<int>(responseBodyString);
 
+                _logger.LogSuccess("GetAllStationIdsFromApiAsync", "", null);
                 return responseBody;
             }
-            catch (HttpRequestException e)
+            catch (HttpRequestException ex)
             {
-                Console.WriteLine($"Anfragefehler: {e.Message}");
+                _logger.LogError(ex, "GetAllStationIdsFromApiAsync", "", null);
+                Console.WriteLine($"Anfragefehler: {ex.Message}");
                 return new List<int>();
             }
         }
@@ -139,11 +145,12 @@ namespace WPFClient
                 
                 string responseBodyString = await response.Content.ReadAsStringAsync();
                 List<int> responseBody = await EntityConverter.ConvertStringToListOfEntities<int>(responseBodyString);
+                _logger.LogSuccess("GetAllSensorIdsFromApiAsync", "", null);
                 return responseBody;
             }
-            catch (HttpRequestException e)
+            catch (HttpRequestException ex)
             {
-                Console.WriteLine($"Anfragefehler: {e.Message}");
+                _logger.LogError(ex, "GetAllSensorIdsFromApiAsync", "", null);
                 return new List<int>();
             }
         }
