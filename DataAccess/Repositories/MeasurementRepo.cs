@@ -285,13 +285,17 @@ namespace DataAccess.Repositories
             {
                 return new List<Measurement>();
             }
+
+            DateTime timeOfFirstMeasurement = DateTime.UtcNow.AddMinutes(-count);
+
             _logger.StartTimer();
 
             List<Measurement>? measurementsFromDb = new List<Measurement>();
 
             try
             {
-                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.Id == sensorId).OrderByDescending(m => m.RecordedAt).Take(count).ToListAsync(), "ToListAsync", "GetLast");
+                //measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt).Take(count).ToListAsync(), "ToListAsync", "GetLast");
+                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.SensorId == sensorId && m.RecordedAt>timeOfFirstMeasurement).OrderByDescending(m => m.RecordedAt).ToListAsync(), "ToListAsync", "GetLast");
                 
                 if(measurementsFromDb.IsNullOrEmpty())
                 {
@@ -320,7 +324,9 @@ namespace DataAccess.Repositories
 
             try
             {
-                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m=> m.RecordedAt>since && m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt).ToListAsync(), "ToListAsync", "GetLast");
+                var querry = _context.Measurements.Where(m => m.RecordedAt > since && m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt);
+                string sqlCommand = querry.ToQueryString();
+                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m=> m.RecordedAt>since && m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt).ToListAsync(), "ToListAsync", "GetLastOfSensorSince");
                 
                 if(measurementsFromDb == null || measurementsFromDb.Count == 0)
                 {
