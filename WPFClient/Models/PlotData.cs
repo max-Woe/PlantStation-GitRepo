@@ -71,7 +71,13 @@ namespace WPFClient.Models
         {
             if(_measurements.Count == 0)
             {
-                string? responseString = await _apiClient.GetMeasurementsFromApiAsyncAsString( "GetLastOfSensor", _sensorId, timeSpan);
+                DateTime since = DateTime.UtcNow;
+
+                DateTime localTimeInGermany = TimeZoneInfo.ConvertTimeFromUtc(since, TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time"));
+
+                DateTime sincelocalTimeInGermany = localTimeInGermany.AddMinutes(-timeSpan);
+
+                string? responseString = await _apiClient.GetMeasurementsFromApiAsyncAsString("GetLastOfSensorSince", _sensorId, timeSpan, sincelocalTimeInGermany);
                 
                 _measurements = await EntityConverter.ConvertStringToListOfEntities<Measurement>(responseString);
             }
