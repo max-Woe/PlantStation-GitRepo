@@ -20,7 +20,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// !!! DIESE ZEILE WURDE ENTFERNT: app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
