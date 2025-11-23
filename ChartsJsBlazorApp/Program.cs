@@ -2,6 +2,19 @@ using ChartsJsBlazorApp.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowExternal",
+        policy =>
+        {
+            // Erlaubt nur Anfragen von deinem Hostnamen (oder der lokalen IP)
+            policy.WithOrigins("http://max-plantstations.ddns.net:5002", "http://192.168.178.75:5002") 
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+        });
+});
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
