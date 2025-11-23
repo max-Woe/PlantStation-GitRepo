@@ -1,4 +1,79 @@
 ﻿@page "/measurements"
-<RadzenChart>
-    <RadzenLineSeries Data="@(new[] { 1, 3, 2 })" />
-</RadzenChart>
+@rendermode InteractiveServer
+
+@using ChartJs.Blazor.LineChart      // Für die LineConfig
+
+<div class="container">
+    <h3>Messwerte anzeigen (Statische Kategorien)</h3>
+    
+    @* --- Nur das Diagramm-Rendering --- *@
+    @if (_config != null && _config.Data.Datasets.Any())
+    {
+        <Chart Config="_config" Width="800" Height="400"></Chart>
+    }
+    else
+    {
+        <div class="alert alert-danger">Fehler beim Initialisieren des Diagramms.</div>
+    }
+</div>
+
+@code{
+    // Die statischen Labels für die X-Achse
+    private readonly string[] StatischeLabels = new[] { "Red", "Yellow", "Green", "Blue" };
+    
+    // Die festen Werte für die Y-Achse, wie gewünscht
+    private readonly List<double> FesteWerte = new List<double> { 6, 5, 3, 7 };
+
+    private LineConfig _config = new LineConfig();
+    
+    // Die Konfiguration wird einmal initialisiert
+    protected override void OnInitialized()
+    {
+        InitializeConfig();
+    }
+
+    private void InitializeConfig()
+    {
+        _config = new LineConfig
+        {
+            Options = new LineOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle { Display = true, Text = "Statische Messwerte pro Kategorie" },
+                Scales = new Scales
+                {
+                    XAxes = new List<CartesianAxis>
+                    {
+                        new CategoryAxis { ScaleLabel = new ScaleLabel { LabelString = "Kategorien", Display = true } }
+                    },
+                    YAxes = new List<CartesianAxis>
+                    {
+                        new LinearCartesianAxis { ScaleLabel = new ScaleLabel { LabelString = "Wert", Display = true } }
+                    }
+                }
+            }
+        };
+        
+        // 1. Statische Labels hinzufügen
+        foreach (var label in StatischeLabels)
+        {
+            _config.Data.Labels.Add(label);
+        }
+
+        // 2. Datensatz mit festen Werten befüllen
+        LineDataset<double> dataset = new LineDataset<double>(FesteWerte)
+        {
+            Label = "Messreihe (Statisch)",
+            
+            // Farbdefinition mit ColorUtil.ColorHexString
+            BackgroundColor = ColorUtil.ColorHexString(54, 162, 235), 
+            BorderColor = ColorUtil.ColorHexString(54, 162, 235), 
+            
+            Fill = false, // <-- GEÄNDERT: Die Fläche unter der Kurve wird nicht gefüllt
+            PointRadius = 5,
+            PointBackgroundColor = ColorUtil.ColorHexString(54, 162, 235)
+        };
+
+        _config.Data.Datasets.Add(dataset);
+    }
+}
