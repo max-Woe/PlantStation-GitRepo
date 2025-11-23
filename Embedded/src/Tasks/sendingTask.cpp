@@ -14,7 +14,7 @@ const int SHIFT_REGISTER_SIZE = 20;
 Measurement shiftRegister[SHIFT_REGISTER_SIZE];
 int shiftRegisterCount = 0;
 
-std::string tempUrl= "https://" + std::string(SERVERIP) + "/api/MeasurementCollection/ReceiveMeasurement";
+std::string tempUrl= "http://" + std::string(SERVERIP) + "/api/MeasurementCollection/ReceiveMeasurement";
 const char* serverUrl  = tempUrl.c_str();
 
 void sendingTask(void* parameter) 

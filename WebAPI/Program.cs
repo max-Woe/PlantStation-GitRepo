@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using DataAccess;
 using Serilog;
@@ -5,6 +6,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL;
 using LoggingService;
 using DataAccess.Repositories;
 using DataAccess.Interfaces;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
