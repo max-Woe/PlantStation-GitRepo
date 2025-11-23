@@ -1,4 +1,5 @@
 using ChartsJsBlazorApp.Components;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +34,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// !!! DIESE ZEILE WURDE ENTFERNT: app.UseHttpsRedirection();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    // Wir akzeptieren die weitergeleiteten Header für IP-Adresse und Protokoll.
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+app.UseCors("AllowExternal");
 
 app.UseStaticFiles();
 app.UseAntiforgery();
