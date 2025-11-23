@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
+#include <string>
 
 #include <secrets.h>
 #include "Models/measurement.h"
@@ -32,7 +33,7 @@ void setup()
 {
     Serial.begin(9600);
 
-    WiFi.begin(SSID, PASSWORD);
+    WiFi.begin(SSID, WIFI_PASSWORD);
     
     macAddressString = WiFi.macAddress();
     macAddress = macAddressString.c_str();
