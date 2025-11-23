@@ -1,0 +1,259 @@
+@page "/measurements"
+@rendermode InteractiveServer
+
+@using ChartJs.Blazor.LineChart
+@using ConverterService
+
+<div class="container">
+    <h3>Messwerte</h3>
+
+    @* --- Nur das Diagramm-Rendering --- *@
+    @if (_config != null && _config.Data.Datasets.Any())
+    {
+        <Chart Config="_config" Width="800" Height="400"></Chart>
+    }
+    else
+    {
+        <div class="alert alert-danger">Fehler beim Initialisieren des Diagramms.</div>
+    }
+</div>
+
+@* @code{ *@
+@* *@
+@*     private List<Measurement> _measurements = new List<Measurement>(); *@
+@*     private List<double> _values = new List<double>(); *@
+@*     private List<DateTime> _times = new List<DateTime>(); *@
+@*     private ApiClient _apiClient; *@
+@*      *@
+@*     // private async Task<string?> measurements = await ApiClient.GetMeasurementsFromApiAsync("GetLastOfSensorSince",88,0, DateTime.Now.AddMinutes(-60)); *@
+@*     // Die statischen Labels für die X-Achse *@
+@*     private readonly string[] StatischeLabels = new[] { "Red", "Yellow", "Green", "Blue" }; *@
+@*      *@
+@*     // Die festen Werte für die Y-Achse, wie gewünscht *@
+@*     private readonly List<double> FesteWerte = new List<double> { 6, 5, 3, 7 }; *@
+@* *@
+@*     private LineConfig _config = new LineConfig(); *@
+@*      *@
+@*     // Die Konfiguration wird einmal initialisiert *@
+@*     protected override void OnInitialized() *@
+@*     { *@
+@*         _apiClient = new ApiClient(); *@
+@*         InitializeData(); *@
+@*         InitializeConfig(); *@
+@*     } *@
+@* *@
+@*     private async void InitializeData() *@
+@*     { *@
+@*         try *@
+@*         { *@
+@*             string? responseString = await _apiClient.GetMeasurementsFromApiAsyncAsString("GetLastOfSensorSince", 88, 0, DateTime.UtcNow.AddMinutes(-60)); *@
+@*             _measurements = await EntityConverter.ConvertStringToListOfEntities<Measurement>(responseString); *@
+@* *@
+@*             int i = 0; *@
+@*             foreach (Measurement measurement in _measurements) *@
+@*             { *@
+@*                 i++; *@
+@*                 if (i % 10 == 0) *@
+@*                 { *@
+@*                 int a = 1; *@
+@*                      *@
+@*                 } *@
+@*                 _values.Add(measurement.Value); *@
+@*                  *@
+@*                 _config.Data.Labels.Add(measurement.RecordedAt.ToString()); *@
+@*             } *@
+@* *@
+@*         } *@
+@*         catch (Exception e) *@
+@*         { *@
+@*             Console.WriteLine(e); *@
+@*         } *@
+@*     } *@
+@*      *@
+@*     private void InitializeConfig() *@
+@*     { *@
+@*         _config = new LineConfig *@
+@*         { *@
+@*             Options = new LineOptions *@
+@*             { *@
+@*                 Responsive = true, *@
+@*                 Title = new OptionsTitle { Display = true, Text = "Statische Messwerte pro Kategorie" }, *@
+@*                 Scales = new Scales *@
+@*                 { *@
+@*                     XAxes = new List<CartesianAxis> *@
+@*                     { *@
+@*                         new CategoryAxis { ScaleLabel = new ScaleLabel { LabelString = "Kategorien", Display = true } } *@
+@*                     }, *@
+@*                     YAxes = new List<CartesianAxis> *@
+@*                     { *@
+@*                         new LinearCartesianAxis { ScaleLabel = new ScaleLabel { LabelString = "Wert", Display = true } } *@
+@*                     } *@
+@*                 } *@
+@*             } *@
+@*         }; *@
+@*          *@
+@*         // // 1. Statische Labels hinzufügen *@
+@*         // foreach (var label in StatischeLabels) *@
+@*         // { *@
+@*         //     _config.Data.Labels.Add(label); *@
+@*         // } *@
+@* *@
+@*         // 2. Datensatz mit festen Werten befüllen *@
+@*         // LineDataset<double> dataset = new LineDataset<double>(FesteWerte) *@
+@*         LineDataset<double> dataset = new LineDataset<double>(_values) *@
+@*         { *@
+@*             Label = "Messreihe (Statisch)", *@
+@*              *@
+@*             // Farbdefinition mit ColorUtil.ColorHexString *@
+@*             BackgroundColor = ColorUtil.ColorHexString(54, 162, 235),  *@
+@*             BorderColor = ColorUtil.ColorHexString(54, 162, 235),  *@
+@*              *@
+@*             Fill = false, // <-- GEÄNDERT: Die Fläche unter der Kurve wird nicht gefüllt *@
+@*             PointRadius = 5, *@
+@*             PointBackgroundColor = ColorUtil.ColorHexString(54, 162, 235) *@
+@*         }; *@
+@* *@
+@*         _config.Data.Datasets.Add(dataset); *@
+@*     } *@
+@* } *@
+
+
+@code{
+
+    private List<Measurement> _measurements = new List<Measurement>();
+    private List<double> _values = new List<double>();
+    private List<DateTime> _times = new List<DateTime>();
+    private ApiClient _apiClient;
+    
+    // Die festen Werte für die Y-Achse, wie gewünscht
+    private readonly List<double> FesteWerte = new List<double> { 6, 5, 3, 7 };
+
+    private LineConfig _config = new LineConfig();
+    
+    // Die Konfiguration wird einmal initialisiert
+    
+    // 💡 NEU: OnInitializedAsync wird verwendet
+    protected override async Task OnInitializedAsync()
+    {
+        _apiClient = new ApiClient();
+        
+        // 💡 NEU: Auf die Datenabfrage warten, bevor die Konfiguration erfolgt
+        await InitializeData(); 
+        double minVal;
+        double maxVal;
+    
+        if (_values.Any())
+        {
+            // 1. Min/Max aus den Daten ermitteln
+            double actualMin = _values.Min();
+            double actualMax = _values.Max();
+
+            // 2. 💡 Angepasste Logik für die glatten Zehner-Grenzen
+            // Min: Abrunden auf die nächste 10er-Zahl
+            minVal = Math.Floor(actualMin / 10.0) * 10;
+        
+            // Max: Aufrunden auf die nächste 10er-Zahl
+            maxVal = Math.Ceiling(actualMax / 10.0) * 10;
+        
+            // Optional: Wenn minVal = maxVal ist (z.B. bei nur einem oder konstanten Werten),
+            // fügen Sie einen Puffer hinzu, um eine Linie zu sehen.
+            if (minVal == maxVal)
+            {
+                minVal -= 10;
+                maxVal += 10;
+            }
+        }
+        else
+        {
+            // Standardwerte, falls keine Daten vorhanden sind
+            minVal = 0;
+            maxVal = 10;
+        }
+        // Die Konfiguration wird erst ausgeführt, wenn _values und Labels gefüllt sind
+        InitializeConfig(minVal, maxVal);
+    }
+
+    // 💡 NEU: Signatur ist jetzt async Task, damit sie await-fähig ist
+    private async Task InitializeData()
+    {
+        try
+        {
+            // Verwenden Sie ToUniversalTime() für das since-Datum, wie besprochen
+            string? responseString = await _apiClient.GetMeasurementsFromApiAsyncAsString("GetLastOfSensorSince", 88, 0, DateTime.UtcNow.AddMinutes(-60));
+            
+            if (responseString != null)
+            {
+                // Sicherstellen, dass die Konvertierung fehlschlagen kann
+                _measurements = EntityConverter.ConvertStringToListOfEntities<Measurement>(responseString).Result;
+                
+                foreach (Measurement measurement in _measurements)
+                {
+                    _values.Add(measurement.Value);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            // Fehlerbehandlung oder Anzeige im UI
+        }
+    }
+    
+    private void InitializeConfig(double min, double max)
+    {
+        // ... (Der Rest von InitializeConfig bleibt unverändert, 
+        // verwendet jetzt aber die gefüllten _values)
+        _config = new LineConfig
+        {
+            Options = new LineOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle { Display = true, Text = _measurements[0].Type },
+                Scales = new Scales
+                {
+                    XAxes = new List<CartesianAxis>
+                    {
+                        // Beachten Sie: Bei Time-Series-Daten sollten Sie evtl. TimeAxis statt CategoryAxis verwenden
+                        new CategoryAxis { ScaleLabel = new ScaleLabel { LabelString = "Zeitpunkt", Display = true } } 
+                    },
+                    YAxes = new List<CartesianAxis>
+                    {
+                        new LinearCartesianAxis
+                        {
+                            ScaleLabel = new ScaleLabel { LabelString = "Wert", Display = true },
+                            Ticks = new LinearCartesianTicks
+                            {
+                                Min = min,
+                                Max = max
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        
+        
+        // Bessere Formatierung für die X-Achse
+        foreach(Measurement measurement in _measurements)
+        {
+            _config.Data.Labels.Add(measurement.RecordedAt.ToString("yy.MM.dd HH:mm:ss"));
+            string test = measurement.RecordedAt.ToString("yy.MM.dd HH:mm:ss");
+            int a = 1;
+        }
+
+        _values.Reverse();
+        
+        // Datensatz mit den nun gefüllten Werten befüllen
+        LineDataset<double> dataset = new LineDataset<double>(_values)
+        {
+            Label = $"{_measurements[0].Type} [{_measurements[0].Unit}]",
+            BackgroundColor = ColorUtil.ColorHexString(54, 162, 235), 
+            BorderColor = ColorUtil.ColorHexString(54, 162, 235), 
+            Fill = false, 
+            PointRadius = 5,
+            PointBackgroundColor = ColorUtil.ColorHexString(54, 162, 235)
+        };
+
+        _config.Data.Datasets.Add(dataset);
+    }
+}
