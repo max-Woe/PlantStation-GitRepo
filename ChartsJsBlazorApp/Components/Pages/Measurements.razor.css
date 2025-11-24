@@ -1,0 +1,37 @@
+/* Stile für den äußeren Container */
+.container {
+    margin: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+/* Stil für das d-grid Panel/Layout */
+.d-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Zwei Spalten */
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.item {
+    padding: 5px;
+}
+
+/* Stile für die Input-Felder, damit sie besser aussehen */
+.d-grid input, .d-grid p {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Stile für die Informationsboxen/Fehlermeldungen */
+.alert-info {
+    padding: 15px;
+    background-color: #e0f7fa;
+    color: #00796b;
+    border: 1px solid #b2ebf2;
+    border-radius: 4px;
+}
