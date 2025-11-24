@@ -15,7 +15,7 @@ namespace ChartsJsBlazorApp
     /// Provides methods to communicate with the PlantStation API, handling HTTP requests 
     /// and deserializing JSON responses.
     /// </summary>
-    class ApiClient
+    public class ApiClient
     {
         private readonly HttpClient _httpClient;
         private readonly HttpClientHandler _httpHandler;

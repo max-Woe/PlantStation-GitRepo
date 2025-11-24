@@ -16,4 +16,8 @@
       <ProjectReference Include="..\LoggingService\LoggingService.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Components\ViewModels\" />
+    </ItemGroup>
+
 </Project>
