@@ -134,7 +134,7 @@ namespace DataAccess.Repositories
         /// </summary>
         /// <param name="stationId">The unique identifier of the station.</param>
         /// <returns>A Task that returns a list of <see cref="Sensor"/> entities. Returns an empty list if the station has no sensors or on failure.</returns>
-        public async Task<List<Sensor>> GetSensorsByStationId(int stationId)
+        public async Task<List<Sensor>> GetByStationId(int stationId)
         {
             _logger.StartTimer();
 

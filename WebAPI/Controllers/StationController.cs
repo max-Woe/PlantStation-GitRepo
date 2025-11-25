@@ -61,7 +61,7 @@ namespace PlantStationAPI.Backend.Controllers
         /// </list>
         /// </returns>
         [HttpGet("{stationId}")]
-        public async Task<JsonResult> GetStation(int stationId)
+        public async Task<JsonResult> Get(int stationId)
         {
             if (stationId == 0)
             {
@@ -96,7 +96,7 @@ namespace PlantStationAPI.Backend.Controllers
         /// </list>
         /// </returns>
         [HttpGet]
-        public async Task<ActionResult> GetAllStations()
+        public async Task<ActionResult> GetAll()
         {
             List<Station> stations;
             try

@@ -130,6 +130,29 @@ namespace PlantStationAPI.Backend.Controllers
 
             return Ok(sensors);
         }
+        /// <summary>
+        /// Retrieves a list of sensor IDs associated with a specific station ID.
+        /// </summary>
+        /// <param name="stationId">The ID of the station whose sensor IDs are to be retrieved.</param>
+        /// <returns>
+        /// An <see cref="IActionResult"/>:
+        /// <list type="bullet">
+        /// <item><description><see cref="ControllerBase.Ok(object)"/> (200) with the list of integer sensor IDs.</description></item>
+        /// <item><description><see cref="ControllerBase.NotFound"/> (404) if no sensor IDs are found for the given station ID (or the returned list is null).</description></item>
+        /// </list>
+        /// </returns>
+        [HttpGet]
+        public async Task<IActionResult> GetByStationId(int stationId)
+        {
+            List<Sensor> sensors = await _sensorRepo.GetByStationId(stationId);
+
+            if (sensors == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(sensors);
+        }
 
         /// <summary>
         /// Retrieves a list of all sensor entities stored in the database.

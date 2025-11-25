@@ -31,7 +31,7 @@ namespace DataAccess.Interfaces
         /// </summary>
         /// <param name="stationId">The ID of the station.</param>
         /// <returns>A Task that returns a <see cref="List{T}"/> of <see cref="Sensor"/> objects for the specified station.</returns>
-        Task<List<Sensor>> GetSensorsByStationId(int stationId);
+        Task<List<Sensor>> GetByStationId(int stationId);
 
         /// <summary>
         /// Retrieves a specific sensor based on the Station ID and the sensor type.
@@ -42,7 +42,7 @@ namespace DataAccess.Interfaces
         Task<Sensor?> GetSensorsByStationIdAndType(int stationId, string type);
 
         /// <summary>
-        /// Retrieves all sensors belonging to a specific station ID. This method is an alias for <see cref="GetSensorsByStationId(int)"/>.
+        /// Retrieves all sensors belonging to a specific station ID. This method is an alias for <see cref="GetByStationId"/>.
         /// </summary>
         /// <param name="id">The ID of the station.</param>
         /// <returns>A Task that returns a <see cref="List{T}"/> of <see cref="Sensor"/> objects for the specified station.</returns>
