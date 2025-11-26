@@ -1,0 +1,107 @@
+@page "/DataBaseMeasurements"
+@rendermode InteractiveServer
+@inherits DataBaseMeasurementsBase
+
+<h3>Datenbankübersicht: </h3>
+
+<div class="table-selection-div">
+    <label>Tables:</label>
+    <select @onchange="HandleTableSelected">
+        <option value="0">Bitte einen Table wählen...</option>
+        @foreach (var eintrag in AvailableTables)
+        {
+            <option value="@eintrag">@eintrag</option>
+        }
+    </select>
+</div>
+
+@if (SelectedTable == "Measurements")
+{
+    <table class="table table-striped allign-centered">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Value</th>
+            <th>Unit</th>
+            <th>SensorId</th>
+            <th>SensorIdReference</th>
+            <th>RecordedAt</th>
+            <th>CreatedAt</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        @foreach (var measurement in MeasurementsList)
+        {
+        <tr>
+                <td>@measurement.Id</td>
+                <td>@measurement.Value.ToString("N3")</td>
+                <td>@measurement.Unit</td>
+                <td>@measurement.SensorId.ToString("N0")</td>
+                <td>@measurement.SensorIdReference.ToString("N0")</td>
+                <td>@measurement.RecordedAt.AddHours(1).ToString("dd-MM-yyyy hh:mm:ss") Uhr</td>
+                <td>@measurement.CreatedAt.AddHours(1).ToString("dd-MM-yyyy hh:mm:ss") Uhr</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else if(SelectedTable == "Sensors")
+{
+    <table class="table table-striped allign-centered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Unit</th>
+                <th>DeviceId</th>
+                <th>StationId</th>
+                <th>CreatedAt</th>
+                <th>UpdatedAt</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var sensor in SensorsList)
+            {
+                <tr>
+                    <td>@sensor.Id</td>
+                    <td>@sensor.Type</td>
+                    <td>@sensor.Unit</td>
+                    <td>@sensor.DeviceId.ToString("N0")</td>
+                    <td>@sensor.StationId.ToString("N0")</td>
+                    <td>@sensor.CreatedAt.AddHours(1).ToString("dd-MM-yyyy hh:mm:ss") Uhr</td>
+                    <td>@sensor.UpdatedAt.AddHours(1).ToString("dd-MM-yyyy hh:mm:ss") Uhr</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if(SelectedTable == "Stations")
+{
+    <table class="table table-striped allign-centered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>MacAddress</th>
+                <th>Location</th>
+                <th>SensorCount</th>
+                <th>CreatedAt</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var station in StationsList)
+            {
+                <tr>
+                    <td>@station.Id</td>
+                    <td>@station.MacAddress</td>
+                    <td>@station.Location</td>
+                    <td>@station.SensorsCount.ToString("N0")</td>
+                    <td>@station.CreatedAt.ToString("dd-MM-yyyy hh:mm:ss") Uhr</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+

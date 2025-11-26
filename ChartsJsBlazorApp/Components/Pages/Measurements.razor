@@ -2,54 +2,64 @@
 @rendermode InteractiveServer
 @inherits MeasurementsBase 
 
-@using ChartJs.Blazor.LineChart
-@using ConverterService
-@using MeasurementsBase_1 = MeasurementsBase
+@* @using ChartJs.Blazor.LineChart *@
+@* @using ConverterService *@
+@* @using MeasurementsBase_1 = MeasurementsBase *@
 
-<div class="container">
+<div class="container-fluid">
     <h3>Messwerte</h3>
     
     <div class="d-grid">
-        <select @onchange = "HandleStationSelection">
-            <option value="0">Bitte Station-ID wählen</option>
+        <div class="stackpanel_selections">
+            <label>StationId:</label>
+            <select @onchange="HandleStationSelection">
+                <option value="0">Bitte Station-ID wählen</option>
 
-            @foreach (var id in _stationIds) // Iterieren Sie über die Quell-Liste
-            {
-                <option value="@id">Station ID: @id</option>
-            }
-        </select>
-        
-        <select @onchange="HandleSensorSelection" disabled="@IsSensorsComboboxDisabled">
-            <option value="0">Bitte Sensor-ID wählen</option> 
-        
-            @foreach (var id in _sensorIds) // Iterieren Sie über die Quell-Liste
-            {
-                <option value="@id">Sensor ID: @id</option>
-            }
-        </select>
-        
-        <select @onchange="HandleTimeSpanSelection" disabled="@IsTimeSpansComboboxDisabled">
-            <option value="0">Bitte Zeitraum wählen</option> 
-        
-            @foreach (var timeSpan in _timeSpans) // Iterieren Sie über die Quell-Liste
-            {
-                <option value="@timeSpan">TimeSpan: @timeSpan</option>
-            }
-        </select>
-        
+                @foreach (var id in _stationIds) // Iterieren Sie über die Quell-Liste
+                {
+                    <option value="@id">@id</option>
+                }
+            </select>
+        </div>
+
+        <div class="stackpanel_selections">
+            <label>SensorId:</label>
+            <select @onchange="HandleSensorSelection" disabled="@IsSensorsComboboxDisabled">
+                <option value="0">Bitte Sensor-ID wählen</option>
+
+                @foreach (var (id, type) in SensorIdsAndTypes) // Iterieren Sie über die Quell-Liste
+                {
+                    <option value="@id">@id, @type</option>
+                }
+            </select>
+        </div>
+        <div class="stackpanel_selections">
+            <label>Zeitspanne:</label>
+            <select @onchange="HandleTimeSpanSelection" disabled="@IsTimeSpansComboboxDisabled">
+                <option value="0">Bitte Zeitraum wählen</option>
+
+                @foreach (var timeSpan in _timeSpans) // Iterieren Sie über die Quell-Liste
+                {
+                    <option value="@timeSpan">@timeSpan</option>
+                }
+            </select>
+        </div>
     </div>
-    
-    @* --- Nur das Diagramm-Rendering --- *@
-    @if (_config != null && _config.Data.Datasets.Any())
-    {
-        <Chart Config="_config" Width="800" Height="400"></Chart>
-    }
-    else if (_isPlotReady)
-    {
-        <div class="alert alert-info">Bitte eine Station und einen Sensor auswählen!</div>
-    }
-    else
-    {
-        <div class="alert alert-info">Daten werden geladen oder sind nicht vorhanden...</div>
-    }
+    <div class="plot">
+        @* --- Nur das Diagramm-Rendering --- *@
+        @if (_config != null && _config.Data.Datasets.Any())
+        {
+            <div class="chart-container-fluid">
+                <Chart Config="_config" ></Chart>
+            </div>
+        }
+        else if (_isPlotReady)
+        {
+            <div class="alert alert-info">Bitte eine Station und einen Sensor auswählen!</div>
+        }
+        else
+        {
+            <div class="alert alert-info">Daten werden geladen oder sind nicht vorhanden...</div>
+        }
+    </div>
 </div>

@@ -1,0 +1,47 @@
+@page "/edit-station"
+@rendermode InteractiveServer
+@inherits EditStationsBase
+
+<h3>EditStations</h3>
+<div class="create-station-div">
+    <h4>Update:</h4>
+    <div class ="station-selection-div">
+        <label>Station:</label>
+        <select @onchange="HandleStationUpdateSelction">
+            <option value="0">Bitte Station-ID wählen</option>
+            @foreach (Station station in @AvailaleStations)
+            {
+                <option value="@station.Id"> @station.Id</option>
+            }
+        </select>
+    </div>
+    
+    <div class="station-info-div">
+        <h4>Station-Infos:</h4>
+        <div class="station-info-values-div">
+            <label>StationId:</label>
+            <p> @SelectedStationIdCombobox</p>
+        </div>
+
+        <div class="station-info-values-div">
+            <label>MacAdress:</label>
+            <p> @SelectedStationMacAdress</p>
+        </div>
+
+        <div class="station-info-values-div">
+            <label>Location:</label>
+            <input type="text" @bind="@NewStationLocation"/>
+        </div>
+
+        <div class="station-info-values-div">
+            <label>SensorCount:</label>
+            <p> @SelectedStationSensorCount</p>
+        </div>
+
+        <div class="station-info-values-div">
+            <label>CreatedAt:</label>
+            <p>  @SelectedStationCreatedAt</p>
+        </div>
+    </div>
+    
+</div>

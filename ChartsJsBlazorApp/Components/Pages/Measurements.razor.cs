@@ -31,15 +31,30 @@ namespace ChartsJsBlazorApp.Components.Pages
 {
     public class MeasurementsBase : ComponentBase
     {
-        // Alle privaten Felder aus dem @code Block
+        private List<Station> _avalibaleStations = new List<Station>();
+        private List<(int, string)> _sensorIdsAndTypes = new List<(int, string)>();
+        public List<(int,string)> SensorIdsAndTypes 
+        {
+            get
+            {
+                return _sensorIdsAndTypes;
+            }
+            set
+            {
+                if (_sensorIdsAndTypes != value)
+                {
+                    _sensorIdsAndTypes = value;
+                }
+            }
+        }
         protected List<int> _stationIds = new List<int>();
+        private List<string> _stationNames = new List<string>();
+        
         protected List<int> _sensorIds = new List<int>();
+        protected List<string> _sensorTypes = new List<string>();
         protected List<TimeSpans> _timeSpans = Enum.GetValues(typeof(TimeSpans)).Cast<TimeSpans>().ToList();
 
-        // public int _selectedSensorId = 0;
-
         private bool _isStationSelected = false; 
-        
         public bool IsStationSelected
         {
             get
@@ -57,7 +72,6 @@ namespace ChartsJsBlazorApp.Components.Pages
         }
         
         private bool _isSensorSelected = false;
-
         public bool IsSensorSelected
         {
             get
@@ -83,6 +97,7 @@ namespace ChartsJsBlazorApp.Components.Pages
         protected List<Measurement> _measurements = new List<Measurement>();
         protected List<double> _values = new List<double>();
         protected List<DateTime> _times = new List<DateTime>();
+        protected string PlotColor = ColorUtil.ColorHexString(255, 255, 255);
 
         // Annahme, dass ApiClient und LineConfig in dieser Klasse bekannt sind
         protected ApiClient _apiClient;
@@ -97,45 +112,23 @@ namespace ChartsJsBlazorApp.Components.Pages
         // Die Konfiguration wird einmal initialisiert
         protected override async Task OnInitializedAsync()
         {
-            // 💡 HINWEIS: Hier müssen die Typen (ApiClient, LineConfig, ColorUtil, EntityConverter)
-            // durch zusätzliche 'using' Anweisungen (oder global in _Imports.razor) zugänglich gemacht werden.
             _apiClient = new ApiClient();
 
-            await FetchStationIds();
-            // double minVal;
-            // double maxVal;
-            //
-            // if (_values.Any())
-            // {
-            //     double actualMin = _values.Min();
-            //     double actualMax = _values.Max();
-            //
-            //     minVal = Math.Floor(actualMin / 10.0) * 10;
-            //     maxVal = Math.Ceiling(actualMax / 10.0) * 10;
-            //
-            //     if (minVal == maxVal)
-            //     {
-            //         minVal -= 10;
-            //         maxVal += 10;
-            //     }
-            // }
-            // else
-            // {
-            //     minVal = 0;
-            //     maxVal = 10;
-            // }
-            //
-            // if (_measurements.Any())
-            // {
-            //     InitializeConfig(minVal, maxVal);
-            // }
+            await FetchStations();
         }
 
-        protected async Task FetchStationIds()
+        protected async Task FetchStations()
         {
             try
             {
-                _stationIds = await _apiClient.GetAllStationIdsFromApiAsync<int>();
+                if (_stationIds.Count > 0) _stationIds.Clear();
+                if (_stationNames.Count > 0) _stationNames.Clear();
+                
+                _avalibaleStations = await _apiClient.GetAllStationsFromApiAsync<Station>();
+                foreach (Station station in _avalibaleStations)
+                {
+                    _stationIds.Add(station.Id);
+                } 
             }
             catch (Exception e)
             {
@@ -174,18 +167,26 @@ namespace ChartsJsBlazorApp.Components.Pages
             }
         }
 
-        private async Task<List<int>> LoadSensorIdsByStationId(int selectedStationId)
+        private async Task<List<(int,string)>> FetchSensorIdsAndTypesByStationId(int selectedStationId)
         {
             try
             {
-                List<int> sensorIdsFromContext =
-                    await _apiClient.GetAllSensorIdsByStationIdFromApiAsync<int>(selectedStationId);
+                List<(int, string)> stationIdsAndTypes = new List<(int, string)>();
+                List<Sensor> sensorsFromContext = await _apiClient.GetAllSensorsByStationIdFromApiAsync<Sensor>(selectedStationId);
+
+                foreach (Sensor sensor in sensorsFromContext)
+                {
+                    if (sensor.Id != 0 && !string.IsNullOrEmpty(sensor.Type))
+                    {
+                        stationIdsAndTypes.Add((sensor.Id, sensor.Type));
+                    }
+                }
                 
-                return sensorIdsFromContext;
+                return stationIdsAndTypes;
             }
             catch (Exception e)
             {
-                return new List<int>() { -1 };
+                return new List<(int,string)>() { (-1, "") };
             }
         }
 
@@ -194,8 +195,11 @@ namespace ChartsJsBlazorApp.Components.Pages
         {
             ResetPlotAndPlotData();
 
-            string? responseString = await _apiClient.GetMeasurementsFromApiAsyncAsString("GetLastOfSensorSince",
-                sensorId, 0, since);
+            string? responseString = await _apiClient.GetMeasurementsFromApiAsyncAsString(
+                "GetLastOfSensorSince",
+                sensorId,
+                0, 
+                since);
 
             if (responseString != null)
             {
@@ -204,6 +208,25 @@ namespace ChartsJsBlazorApp.Components.Pages
                 // Hier wurde es für die Kompatibilität mit dem Originalcode beibehalten.
                 _measurements = EntityConverter.ConvertStringToListOfEntities<Measurement>(responseString).Result;
                 _measurements.Reverse();
+
+                switch (_measurements[0].Type)
+                {
+                    case "soil_moisture":
+                    {
+                        PlotColor = ColorUtil.ColorHexString(204, 51, 0); // braun
+                        break;
+                    }
+                    case "humidity":
+                    {
+                        PlotColor = ColorUtil.ColorHexString(0, 102, 255); // blau
+                        break;
+                    }
+                    case "temperature":
+                    {
+                        PlotColor = ColorUtil.ColorHexString(255, 0, 0); // rot
+                        break;
+                    }
+                }
 
                 foreach (Measurement measurement in _measurements)
                 {
@@ -229,6 +252,8 @@ namespace ChartsJsBlazorApp.Components.Pages
                 Options = new LineOptions
                 {
                     Responsive = true,
+                    MaintainAspectRatio = false,
+                    AspectRatio = 1.778,
                     Title = new OptionsTitle { Display = true, Text = _measurements[0].Type },
                     Scales = new Scales
                     {
@@ -257,11 +282,11 @@ namespace ChartsJsBlazorApp.Components.Pages
             LineDataset<double> dataset = new LineDataset<double>(_values)
             {
                 Label = $"{_measurements[0].Type} [{_measurements[0].Unit}]",
-                BackgroundColor = ColorUtil.ColorHexString(54, 162, 235),
-                BorderColor = ColorUtil.ColorHexString(54, 162, 235),
+                BackgroundColor = PlotColor,
+                BorderColor = PlotColor,
                 Fill = false,
                 PointRadius = 0,
-                PointBackgroundColor = ColorUtil.ColorHexString(54, 162, 235)
+                PointBackgroundColor = PlotColor
             };
 
             _config.Data.Datasets.Add(dataset);
@@ -272,8 +297,8 @@ namespace ChartsJsBlazorApp.Components.Pages
             if (IsStationSelected && _isSensorSelected && _isTimeSpanSelected)
             {
                 _isPlotReady = true;
-                
-                await SetMeasurementsForPlot(SelectedSensorId, DateTime.UtcNow.AddMinutes(-SelectedTimeSpan));//AddMinutes(-60));//.
+                DateTime localTime =  TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time"));
+                await SetMeasurementsForPlot(SelectedSensorId, localTime.AddMinutes(-SelectedTimeSpan));//AddMinutes(-60));//.
                 await LoadPlot();
             }
         }
@@ -283,10 +308,23 @@ namespace ChartsJsBlazorApp.Components.Pages
             // 1. Wert aus dem Event lesen und konvertieren
             if (int.TryParse(e.Value?.ToString(), out int newStationId) && newStationId > 0)
             {
+                if (_sensorIds.Count > 0)
+                {
+                    _sensorIds.Clear();
+                }
+                if (_sensorTypes.Count > 0)
+                {
+                    _sensorTypes.Clear();
+                }
+                
                 IsStationSelected = true; // Sensor-Combobox freischalten
                 SelectedStationId = newStationId;
-        
-                _sensorIds = await LoadSensorIdsByStationId(SelectedStationId);
+                _sensorIdsAndTypes= await FetchSensorIdsAndTypesByStationId(SelectedStationId);
+                foreach ((int,string) sensorIdAndType in _sensorIdsAndTypes)
+                {
+                    _sensorIds.Add(sensorIdAndType.Item1);
+                    _sensorTypes.Add(sensorIdAndType.Item2);
+                }
         
                 // 3. UI zwingen, sich zu aktualisieren (wird meist automatisch gemacht, aber ist sicherer)
                 await PlotIfReady();
