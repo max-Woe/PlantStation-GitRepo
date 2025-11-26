@@ -127,6 +127,7 @@ namespace ChartsJsBlazorApp
                 string resourceEndpoint = $"api/Station/GetAll";
 
                 HttpResponseMessage response = await _httpClient.GetAsync(resourceEndpoint);
+                string comleteUrl = response.RequestMessage.RequestUri.AbsoluteUri;
                 response.EnsureSuccessStatusCode(); 
                 
                 string responseBodyString = await response.Content.ReadAsStringAsync();
@@ -230,6 +231,43 @@ namespace ChartsJsBlazorApp
             {
                 Console.WriteLine($"Anfragefehler: {e.Message}");
                 return new List<int>();
+            }
+        }
+        
+        /// <summary>
+        /// Asynchronously retrieves a list of Sensor IDs associated with a specific station ID from the API.
+        /// </summary>
+        /// <typeparam name="T">A placeholder type parameter.</typeparam>
+        /// <param name="stationId">The ID of the station for which to retrieve sensor IDs.</param>
+        /// <returns>A Task that returns a list of integer Sensor IDs, or an empty list if the station ID is invalid or an error occurs.</returns>
+        public async Task<List<Sensor>> GetAllSensorsByStationIdFromApiAsync<T>(int stationId)
+        {
+
+            string resourceEndpoint = $"api/Sensor/GetByStationId";
+
+            if (stationId <= 0)
+            {
+                return new List<Sensor>();
+            }
+            else
+            {
+                resourceEndpoint += $"?stationId={stationId}";
+            }
+
+            try
+            {
+
+                HttpResponseMessage response = await _httpClient.GetAsync(resourceEndpoint);
+                response.EnsureSuccessStatusCode(); 
+                
+                string responseBodyString = await response.Content.ReadAsStringAsync();
+                List<Sensor> responseBody = await EntityConverter.ConvertStringToListOfEntities<Sensor>(responseBodyString);
+                return responseBody;
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine($"Anfragefehler: {e.Message}");
+                return new List<Sensor>();
             }
         }
     }
