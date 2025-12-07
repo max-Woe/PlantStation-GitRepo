@@ -1,11 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using DataAccess.Interfaces;
 
 namespace DataAccess.Models;
 
 /// <summary>
 /// Represents a single measurement of a sensor.
 /// </summary>
-public class Measurement
+public abstract class Measurement:IJsonSerializable
 {
     /// <summary>
     /// Gets or sets the unique identifier.
@@ -72,6 +74,10 @@ public class Measurement
 
     public override string ToString()
     {
-        return $"Measurement(Id={Id}, Value={Value}, Unit={Unit}, Type={Type}, SensorId={SensorId}, SensorIdReference={SensorIdReference}, RecordedAt={RecordedAt}, CreatedAt={CreatedAt})";
+        string measurementAsString = $"Value = {Value}, " +
+                                     $"Unit = {Unit}, " +
+                                     $"SensorId = {SensorId}, " +
+                                     $"SensorIdReference = {SensorIdReference}";
+        return measurementAsString;
     }
 }

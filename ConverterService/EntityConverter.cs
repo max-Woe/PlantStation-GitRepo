@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal; // Not used, but kept for
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DataAccess.Interfaces;
 
 namespace ConverterService
 {
@@ -10,7 +11,7 @@ namespace ConverterService
     /// Provides generic static utility methods for converting JSON strings to lists of entities 
     /// and for validating JSON string format.
     /// </summary>
-    public class EntityConverter
+    public static class EntityConverter
     {
         /// <summary>
         /// Determines whether the specified string is a valid JSON document.
@@ -21,7 +22,7 @@ namespace ConverterService
         /// Uses <see cref="JsonDocument.Parse(string)"/> internally and catches a <see cref="JsonException"/> 
         /// if the string is not valid JSON. Returns <see langword="false"/> for null or whitespace strings.
         /// </remarks>
-        static public bool IsValidJson(string jsonString)
+        private static bool IsValidJson(string jsonString)
         {
             if (string.IsNullOrWhiteSpace(jsonString))
             {
@@ -36,6 +37,32 @@ namespace ConverterService
             {
                 return false;
             }
+        }
+
+        public static bool IsValid(string entityString)
+        {
+            if (string.IsNullOrEmpty(entityString))
+            {
+                return false;
+            }
+
+            try
+            {
+                using (JsonDocument.Parse(entityString))
+                {
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
+        }
+        
+        public static string ToJson(this IJsonSerializable obj)
+        {
+            return JsonSerializer.Serialize(obj);
         }
 
         /// <summary>
