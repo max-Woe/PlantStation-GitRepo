@@ -7,6 +7,8 @@ namespace DataAccess.Models;
 /// </summary>
 public class Sensor
 {
+    private DateTime _createdAt = DateTime.UtcNow;
+    private DateTime _updatedAt = DateTime.UtcNow;
     /// <summary>
     /// Gets or sets the unique identifier id.
     /// </summary>
@@ -41,12 +43,20 @@ public class Sensor
     /// <summary>
     /// Gets or sets the time when the sensor first was captured in the database.
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt
+    {
+        get => _createdAt; 
+        set => _createdAt = value.ToUniversalTime();
+    }
 
     /// <summary>
     /// Gets or sets the time when the sensor was updated last.
     /// </summary>
-    public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedAt
+    {
+        get => _updatedAt; 
+        set => _updatedAt = value.ToUniversalTime();
+    }
 
     /// <summary>
     /// Updates the sensor entry including type, unit, deviceId, stationId station and updatedAt.

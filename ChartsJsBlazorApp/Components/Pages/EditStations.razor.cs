@@ -36,8 +36,6 @@ namespace ChartsJsBlazorApp.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            // 💡 HINWEIS: Hier müssen die Typen (ApiClient, LineConfig, ColorUtil, EntityConverter)
-            // durch zusätzliche 'using' Anweisungen (oder global in _Imports.razor) zugänglich gemacht werden.
             _apiClient = new ApiClient();
 
             await FetchStations();

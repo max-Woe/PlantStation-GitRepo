@@ -8,7 +8,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowExternal",
         policy =>
         {
-            // Erlaubt nur Anfragen von deinem Hostnamen (oder der lokalen IP)
+            // Defines hostname for Requests
             policy.WithOrigins("http://max-plantstations.ddns.net:5002", "http://192.168.178.75:5002") 
                 .AllowAnyMethod()
                 .AllowAnyHeader()
@@ -36,7 +36,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
-    // Wir akzeptieren die weitergeleiteten Header für IP-Adresse und Protokoll.
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 

@@ -7,6 +7,7 @@ namespace DataAccess.Models;
 /// </summary>
 public class Station
 {
+    private DateTime _createdAt = DateTime.UtcNow;
     /// <summary>
     /// Gets or sets the unique identifier.
     /// </summary>
@@ -31,7 +32,11 @@ public class Station
     /// <summary>
     /// Gets or sets the time when the station was first created.
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt
+    {
+        get => _createdAt; 
+        set => _createdAt = value.ToUniversalTime();
+    }
 
     /// <summary>
     /// Updates the station including mac address, location and count of sensors.

@@ -7,11 +7,17 @@ namespace DataAccess.Models
     /// </summary>
     public class MeasurementCollection
     {
+        private DateTime _time = DateTime.UtcNow;
+
         /// <summary>
         /// Gets or sets the unique identifier.
         /// </summary>
         [Key]
-        public DateTime Time { get; set; }
+        public DateTime Time
+        {
+            get => _time;
+            set => _time= value.ToUniversalTime();
+        }
 
         /// <summary>
         /// Gets or sets the water level measurement.

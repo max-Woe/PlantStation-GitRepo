@@ -9,6 +9,9 @@ namespace DataAccess.Models;
 /// </summary>
 public abstract class Measurement:IJsonSerializable
 {
+    private DateTime _recordedAt = DateTime.UtcNow;
+    private DateTime _createdAt = DateTime.UtcNow;
+
     /// <summary>
     /// Gets or sets the unique identifier.
     /// </summary>
@@ -21,14 +24,14 @@ public abstract class Measurement:IJsonSerializable
     public double Value { get; set; }
 
     /// <summary>
-    /// Gets or sets the unite.
+    /// Gets or sets the unit.
     /// </summary>
-    public string Unit { get; set; }   //TODO: unit wird ohne E geschrieben!!
+    public string Unit { get; set; }
     
     /// <summary>
     /// Gets or sets the type.
     /// </summary>
-    public string Type { get; set; }   //TODO: unit wird ohne E geschrieben!!
+    public string Type { get; set; }   
 
     /// <summary>
     /// Gets or sets the sensor id.
@@ -48,13 +51,20 @@ public abstract class Measurement:IJsonSerializable
     /// <summary>
     /// Gets or sets the time when the measurement was recorded from the sensor.
     /// </summary>
-    public DateTime RecordedAt { get; set; } = DateTime.UtcNow;
+    public DateTime RecordedAt
+    {
+        get => _recordedAt;
+        set => _recordedAt = value.ToUniversalTime();
+    }
 
     /// <summary>
     /// Gets or sets the time when the measurement was captured in the database.
     /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
+    public DateTime CreatedAt
+    {
+        get => _createdAt;
+        set => _createdAt = value.ToUniversalTime();
+    }
 
     /// <summary>
     /// Updates the modifiable properties of this measurement

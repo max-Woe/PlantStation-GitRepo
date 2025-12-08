@@ -12,11 +12,17 @@ namespace DataAccess.Models
     /// </summary>
     public class ReceivedMeasurement
     {
+        private DateTime _time = DateTime.UtcNow;
+
         /// <summary>
         /// The precise time (in UTC) when the measurement was recorded.
         /// This value is set indirectly via the <see cref="UnixTime"/> property.
         /// </summary>
-        public DateTime Time { get; private set; }
+        public DateTime Time
+        {
+            get => _time; 
+            set => _time = value.ToUniversalTime();
+        }
 
         /// <summary>
         /// The Unix timestamp (seconds since 1970-01-01) used for deserialization.
