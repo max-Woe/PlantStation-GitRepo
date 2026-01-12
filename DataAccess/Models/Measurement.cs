@@ -7,7 +7,7 @@ namespace DataAccess.Models;
 /// <summary>
 /// Represents a single measurement of a sensor.
 /// </summary>
-public abstract class Measurement:IJsonSerializable
+public class Measurement:IJsonSerializable
 {
     private DateTime _recordedAt = DateTime.UtcNow;
     private DateTime _createdAt = DateTime.UtcNow;

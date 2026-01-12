@@ -83,6 +83,7 @@
 
 .nav-scrollable {
     display: none;
+    width: 15vw;
 }
 
 .navbar-toggler:checked ~ .nav-scrollable {

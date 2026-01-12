@@ -1,0 +1,114 @@
+.intro-parallax-container {
+    overflow-x: hidden;
+}
+.intro-parallax-container h1, h2
+{
+    display: block;
+    align-content: center;
+    height: 100vh;
+    max-width: 65%;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+.intro-parallax-container h1
+{
+    font-size: 10rem;
+    text-align: center;
+    line-height: 0.8;
+}
+.intro-parallax-container h1 span.subtitle-h1
+{
+    font-size: 2rem;
+    line-height: 1.2;
+    display: block;
+}
+.intro-parallax-container h2
+{
+    text-align: center;
+    word-wrap: break-word;
+    hyphens: manual;
+    font-size: 5rem;
+}
+
+.intro-parallax-section{
+    display: block;
+    justify-content: center;
+    align-items: center;
+    background-size: cover;
+    background-position: left center;
+    background-attachment: fixed;
+    place-items: center;
+}
+.intro-section-1
+{
+    height: 100%;
+    background-image: url('pictures/bonsai_topSection.jpg');
+}
+
+.intro-content-section
+{
+    min-width: 10px;
+    margin: 0 10rem 0 10rem;
+    padding: 2rem;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(199, 199, 199, 0.8);
+}
+.intro-content-article
+{
+    display: flex;
+    flex-direction: column;
+}
+.intro-content-h4
+{
+    padding-left: 1rem;
+}
+.intro-content-h3
+{
+    display: block;
+}
+.intro-content-bold-text
+{
+    font-weight: bold;
+}
+.intro-content-figure
+{
+    width: fit-content;
+    /*align-self: center;*/
+    max-width: 80%;
+    margin: 0 auto;
+}
+.intro-content-figure-image-whtiespace
+{
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-top: 1rem;
+}
+.intro-content-figure-caption-whtiespace
+{
+    display: block;
+    margin-bottom: 1rem;
+}
+.intro-content-image
+{
+    display: block;
+    justify-items: center;
+    /*max-width: 100%;*/
+}
+.intro-content-image-border
+{
+    border: 1px solid black;
+}
+
+.subscript-text
+{
+    vertical-align: sub;
+    font-size: smaller;
+}
+
+.intro-content-end
+{
+    /*margin-bottom:20vh;*/
+}
+

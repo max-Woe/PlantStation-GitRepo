@@ -34,14 +34,17 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseHttpsRedirection();
+
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
+app.UseStaticFiles();
+
 app.UseCors("AllowExternal");
 
-app.UseStaticFiles();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()

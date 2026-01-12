@@ -1,0 +1,198 @@
+@page "/ProjectIntroduction"
+@inject IJSRuntime JSRuntime
+
+<div class="intro-parallax-container">
+    <div class="intro-parallax-section intro-section-1">
+        <h1>
+            Plant&shy;Station
+            <span class="subtitle-h1">
+                Automatisierte Erfassung und Überwachung pflanzlicher Vitalwerte. A
+            </span>
+        </h1>
+        <div class="intro-content-section">
+            <h3>Zusammenfassung</h3>
+            <article class="intro-content-article">
+                <p>
+                    Das PlantStation-System dient zur Erfassung und Überwachung meiner Zimmerpflanzen. Überwacht werden 
+                    momentan: Raumtemperatur, Luftfeuchtigkeit und Bodenfeuchtigkeit (weiter geplant sind Werte wie
+                    CO<span class="subscript-text">2</span>, pH- und EC-Wert des Bodens.)
+                </p>
+                <p>
+                    Der Prozess beginnt beim erfassen der Messwerte (<span class="intro-content-bold-text">Sensoren</span>), 
+                    gefolgt von einer Validierung (<span class="intro-content-bold-text">μ-C</span>), Aufarbeitung 
+                    (<span class="intro-content-bold-text">API</span>), Speicherung 
+                    (<span class="intro-content-bold-text">DB</span>) und endet bei der Visualisierung 
+                    (<span class="intro-content-bold-text">WPF/Blazor</span>). Nachfolgend ist der Prozessablauf 
+                    in einem Diagramm dargestellt (Abb. 1).
+                </p>
+                <figure class="intro-content-figure">
+                    <img class="intro-content-image intro-content-figure-image-whtiespace"
+                         src="pictures/IoT-Architektur-Diagramm_schwarz.drawio.png"
+                         alt="Bild: Ablaufdiagramm"/>
+                    <figcaption class="intro-content-figure-caption-whtiespace">Abb. 1: Prozessablauf</figcaption>
+                </figure>
+                <p>
+                    Aufgenommen werden die Messwerte über Sensoren, welche direkt an einem ESP-32-Microcontroller (μ-C) 
+                    angeschlossen sind. Der Microcontroller nimmt und bereitet die Teils analogen Messwerte auf und 
+                    sendet diese per HTTP-Post an eine REST-API.
+                </p>
+                <p>
+                    Zur Weiterverarbeitung gelangen die Messdaten über die API ins Backend. Dort wird jeder Messwert 
+                    validiert, einem Sensor und einer Station zugeordnet und in einer Datenbank abgespeichert.
+                </p>
+                <p>
+                    Die Visualisierung findet wahlweise über eine native Windows-App (WPF) oder diese Website 
+                    (Razor-Page) statt. Dazu werden die Daten aus der Datenbank abgerufen und visuell aufgearbeitet.
+                </p>
+                <p>
+                    Als Server dient mir ein alter RaspberryPi 3B+. Dieser hat mit einer 32 GB Speicherkarte weit mehr 
+                    als genug Speicher für meinen Zweck und lässt sich leicht bespielen.  
+                </p>
+            </article>
+        </div>
+        
+        <h2 class="intro-content-h2">Mess&shy;wert&shy;er&shy;fas&shy;sung und Validierung</h2>
+        <div class="intro-content-section">
+            <article class="intro-content-article">
+                <div class="intro-content-h3 ">
+                    <h3>Sensoren</h3>
+                    <p>
+                        Die Aufnahme der Messwerte erfolgt momentan über zwei Sensoren. Nachfolgend sind die relevanten Hardware-Bestandteile abgebildet 
+                        (Abb. 2).<br/>
+                    </p>
+                    <ul>
+                        <li>Bodenfeuchtigkeit: kapazitiver Bodenfeuchtigkeitssensor (analog)</li>
+                        <li>Luftfeuchtigkeit und -temperatur: DHT22 (digital)</li>
+                    </ul>
+                    <figure class="intro-content-figure">
+                        <img class="intro-content-image intro-content-figure-image-whtiespace intro-content-image-border" 
+                             src="pictures/Messwertaufnahme.png" 
+                             alt="Bild: Sensoren und ESP32"/>
+                        <figcaption class="intro-content-figure-caption-whtiespace">
+                            Abb. 2: DHT22 (links), kapazitiver Bodenfeuchtigkeitssensor (rechts)  
+                            und ESP32-WROOM-32 (mitte).
+                        </figcaption>
+                    </figure>
+                    
+                    <div class="intro-content-h4">
+                        <h4>Messung der Bodenfeuchtigkeit</h4>
+                        <p>
+                            Die Bodenfeuchtigkeit wird von einem kapazitiven Senor gemessen. Durch die kapazitive Messung
+                            ist der Sensor weniger anfällig für Korrosion der Elektroden. <br />
+                            Die Spannungsversorgung erfolgt dabei durch den Microcontroller, mit 5 V. Über eine Messeinheit, 
+                            welche aus zwei Elektroden besteht und im Boden versenkt wird, wird die Kapazität des Bodens 
+                            ermittelt. Bei sich verändernder Bodenfeuchtigkeit verändert sich auch die Kapazität des Bodens. 
+                            Dies hat zur Folge, dass die Ausgangsspannung der Messeinheit, welche über den 
+                            Analog-Digital-Converter-Pin (ADC, GPIO-Pin 32) gemessen wird, sinkt. <br />
+                            Die Kalibrierung erfolgte, sehr simpel, durch die Ermittlung des Maximal- und Minimalwertes. 
+                            Der Maximalwert der Messungen wurde an der freien Luft (0% Bodenfeuchtigkeit) und der 
+                            Minimalwert durch vollständiges eintauchen in Leitungswasser (100% Bodenfeuchtigkeit) ermittelt. 
+                            So können die aufgenommenen Messwerte direkt mittels 3 Satz auf einen entsprechenden Prozentwert 
+                            gemappt werden. ********MESSUNGENAUIGKEITEN*****************
+                        </p>
+                    </div>
+                    <div class="intro-content-h4">
+                        <h4>Messung der Luftfeuchtigkeit und Temperatur</h4>
+                        <p>
+                            Zur Messung der Luftfeuchtigkeit und -temperatur wird ein DHT22 eingesetzt. Dieser hat den
+                            Vorteil, dass die Messwerte schon gemappt als Digitalwert bei Microcontroller ankommen. Dadurch
+                            entfällt sowohl das Kalibrieren als auch das mappen der Messwerte und diese können direkt
+                            weiterverarbeitet werden.<br />
+                            Auch hier erfolgt die Spannungsversorgung durch den Microcontroller, diesmal aber mit 3,3 V, und 
+                            die digitalen Messwerte werden über GPIO-PIN 4 aufgenommen. ********MESSUNGENAUIGKEITEN*****************
+                        </p>
+                    </div>
+                    
+                </div>
+            </article>
+        </div>
+    
+        <h2 class="intro-content-h2">Er&shy;fas&shy;sung und Ver&shy;sand</h2>
+        <div class="intro-content-section">
+            <article style="color:red;">
+                <h3>μ-C</h3>
+                <p>So aufgenommene Messwerte werden minütlich im Microcontroller(ESP32-WROOM-32) erfasst, falls nötig,
+                    gemappt, daraufhin mit einer Einheit, einem Sensortypen und der boardeigenen Mac-Adresse über einen
+                    HTTP-Post an die API gesendet.
+                </p>
+                <div class="intro-content-h4">
+                        <h4>Verarbeitung der Messdaten</h4>
+                        <h4>Versand der Messdaten</h4>
+                        <p>
+                            Damit die Messdaten korrekt an die API gesendet werden können müssen diese erstmal aufarbeite
+                            und für den Versand vorbereitet werden. Das ganze geschieht mit einem ESP-32-WROOM-32 
+                            Microcontroller.<br/>
+                            Für die beiden Aufgaben (Aufarbeiten und Senden), des Microcontrollers, laufen zwei parallele 
+                            Tasks.
+                        </p>
+                        <ul>
+                            <li>
+                                Measurement-Task: Übernimmt alle Aufgaben die zur Erfassung und Aufbereitung der Messwerte.
+                            </li>
+                            <li>
+                                Sensing-Task: Kümmert sich um den Versand der aufgearbeiteten Messdaten an die API.
+                            </li>
+                        </ul>
+                        <p>
+                            Die Measurement-Task übernimmt das erfassen und aufarbeiten neuer Messwerte. Da die analogen 
+                            Messwerte des Bodenfeuchtigkeitssensors teils stark schwanken werden alle Sensoren sekündlich 
+                            ausgelesen und in ein Register geschrieben. Alle 60 sekunden wird aus den Messwerten ein 
+                            Mittelwert gebildet und somit die Messungenauigkeit des kapazitiven Sensors stark verringert.
+                            Sobald ein Messwert aufgearbeitet wurde wird dieser als Measurement-Objekt in ein weiteres 
+                            Register (*******measurementsToSend*******) geschrieben.<br/>
+                            Die Sending-Task schaut sich *******jede Sekunde***** einmal das measurementsToSend-Register an.
+                            Wenn dieses einen Eintrag hat wird dieser genommen und per HTTP-Post an die API geschickt. Falls 
+                            das Senden fehlschlägt wird der Messwert in ein drittes Register (*********failedToSend***********)
+                            geschrieben. Dieses Register wird jedes mal zu Beginn der Sending-Task auf Inhalt geprüft und 
+                            solange es einen Eintrag hat, wird dieser probiert zu Versenden. Erst danach beginnt der Prozess 
+                            zum Versenden neuer Messwerte.
+                        </p>
+                    </div>
+            </article>
+        </div>
+        
+        <h2 class="intro-content-h2">Auf&shy;ar&shy;bei&shy;tung und Spei&shy;cher&shy;ung</h2>
+        <div class="intro-content-section">
+            <article>
+                <h3>API</h3>
+                <p>
+                    Nachdem die Messwerte erfasst und validiert wurden, werden diese über den HTTP-Post vom 
+                    Microcontroller an die REST-API gesendet. Diese nimmt die Werte entgegen und arbeitet Diese für die 
+                    Datenbank auf. Die Aufbereiteten Messwerte werden darauf hin in einer PostgreSQL-Datenbank 
+                    aufgenommen und gespeichert. Von dort aus werden die Daten (Messwerte, Sensoren und Messstationen), 
+                    ebenfalls über die API, vom Frontend abgefragt. Dazu werden die Daten, entsprechend der Anfrage, 
+                    passend aufgearbeitet und dann mittels HTTP-GET zum Frontend übertragen.
+                </p>
+                
+                <h3>DB</h3>
+                <p>
+                    Als Datenbank wurde eine PostgreSQL gewählt, da diese später leicht in eine TimeScaleDB umwandeln 
+                    lässt. In der Datenbank werden neben den Messwerten auch ein entsprechender Sensor und eine Station 
+                    aufgenommen. Die Station bildet dabei bspw. einen Raum und der Sensor einen dem Messwert 
+                    entsprechenden Sensor(-typ) ab. Somit hat jeder Messwert genau einen Sensor und jeder Sensor gehört zu 
+                    genau einer Station. (später geplant sind auch Nutzer u.Ä.)
+                </p>
+            </article>
+        </div>
+    
+        <h2 class="intro-content-h2">Visualisierung</h2>
+        
+        <div class="intro-content-section">
+            <article style="color:red;">
+                <h3>User Interfaces</h3>
+                <div class="intro-content-h4">
+                    <h3>WPF</h3>
+                    <p>
+                        In der WPF werden die Messwerte für Nutzer dargestellt, welche eine native Windwos App bevorzugen...
+                    </p>
+                    <h3>Blazor</h3>
+                    <p>
+                        In der Blazor-App können die Messwerte vom Nutzer direkt über den Browser eingesehen werden. So 
+                        ist der Nutzer nicht an ein bestimmtes Betriebssystem gebunden.
+                    </p>
+                </div>
+            </article>
+        </div>
+
+    </div>
+</div>
