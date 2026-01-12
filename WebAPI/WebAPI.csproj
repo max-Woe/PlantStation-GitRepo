@@ -16,9 +16,9 @@
 	<ItemGroup>
 		<ProjectReference Include="..\DataAccess\DataAccess.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-		<Content Include="wwwroot\**" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
-	</ItemGroup>
+<!--	<ItemGroup>-->
+<!--		<Content Include="wwwroot\**" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />-->
+<!--	</ItemGroup>-->
 	<Target Name="RemoveConflict" BeforeTargets="CopyFilesToOutputDirectory">
 		<RemoveDir Directories="bin\$(Configuration)\net8.0\linux-arm" />
 	</Target>
