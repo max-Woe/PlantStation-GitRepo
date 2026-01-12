@@ -1,0 +1,320 @@
+@page "/parallaxWebsite"
+@inject IJSRuntime JSRuntime
+
+<div class="intro-parallax-container">
+    <div class="intro-parallax-section intro-section-1">
+        <h1>
+            Plant&shy;Station
+            <span class="subtitle-h1">
+                Automatisierte Erfassung und Überwachung pflanzlicher Vitalwerte.
+            </span>
+        </h1>
+        <div class="intro-content-section">
+            <h3>Über das Projekt</h3>
+            <article class="intro-content-article">
+                <p>
+                    Dieses System dient der zentralen Erfassung und Überwachung der Gesundheit von Zimmerpflanzen. Es 
+                    ermöglicht eine lückenlose Datensammlung aller relevanten Vitalwerte, die für den Nutzer 
+                    übersichtlich aufbereitet werden.
+                </p>
+                <h4>Aktueller Funktionsumfang:</h4>
+                <ul>
+                    <li><span class="intro-content-bold-text">Sensorik:</span> Messung von Luftfeuchtigkeit, Lufttemperatur 
+                        und Bodenfeuchtigkeit.</li>
+                    <li>
+                        <span class="intro-content-bold-text">Monitoring:</span> Echtzeit-Visualisierung der Datenströme.
+                    </li>
+                </ul>
+                <figure class="intro-content-figure">
+                    <img class="intro-content-image intro-content-figure-image-whtiespace"
+                         src="pictures/IoT-Architektur-Diagramm_schwarz.drawio.png"
+                         alt="Bild: Ablaufdiagramm"/>
+                    <figcaption class="intro-content-figure-caption-whtiespace">Abb. 1: Prozessablauf</figcaption>
+                </figure>
+                
+                <h4>Zukunft & Skalierbarkeit:</h4>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Erweiterte Sensorik:</span> Integration von Lichtintensität, pH- 
+                        und EC-Werten.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Interaktion:</span> Automatisierte Alarmmeldungen bei kritischen 
+                        Grenzwerten sowie die aktive Steuerung der Vitalwerte durch Aktoren.Einleitung & Motivation
+                    </li>
+                </ul>
+            </article>
+        </div>
+        
+        @* <h2 class="intro-content-h2">Sys&shy;tem&shy;ü&shy;ber&shy;sicht</h2> *@
+        @* <div class="intro-content-section"> *@
+        @* </div> *@
+        
+        <h2 class="intro-content-h2">Hard&shy;ware & Da&shy;ten&shy;er&shy;fas&shy;sung</h2>
+        <div class="intro-content-section">
+            <article class="intro-content-article">
+                <h4>Sensorik:</h4>
+                <figure class="intro-content-figure">
+                    <img class="intro-content-image intro-content-figure-image-whtiespace"
+                         src="pictures/Messwertaufnahme.png"
+                         alt="Bild: Ablaufdiagramm"/>
+                    <figcaption class="intro-content-figure-caption-whtiespace">Abb. 1: Prozessablauf</figcaption>
+                </figure>
+                <p>
+                    Der Prozess beginnt mit der Aufnahme der physikalischen Umgebungsdaten. Hier kommen zwei 
+                    unterschiedliche Verfahren zum Einsatz:
+                </p>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Analoges Signal (Bodenfeuchtigkeit):</span> Ein kapazitiver 
+                        Sensor liefert ein analoges Signal an den ADC (Analog-Digital-Converter) des ESP32. Dieser 
+                        Rohwert wird im Mikrocontroller in einen Prozentwert umgerechnet.
+                    </li>
+                    <li><span class="intro-content-bold-text">Digitales Signal (Klima):</span> Der DHT22 erfasst 
+                        Luftfeuchtigkeit und Temperatur. Er übermittelt die Daten bereits digital in ihren jeweiligen 
+                        SI-Einheiten, wodurch eine manuelle Umrechnung entfällt.</li>
+                </ul>
+                <h4>Mikrocontroller-Logik: Aufbereitung & Verifizierung</h4>
+                <p>Bevor die Daten gesendet werden, stellt der ESP32 die Datenqualität sicher:</p>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Aufbereitung</span> Filterung und Skalierung der analogen 
+                        Rohwerte.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Verifizierung:</span>- Jeder Messwert wird auf 
+                        Plausibilität geprüft (z. B. liegt der Wert im Bereich &le;100).
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Objektbildung:</span>Aus validen Daten wird ein zentrales 
+                        Measurement-Objekt erstellt. Dieses enthält:
+                        <ol>
+                            <li>Zeitstempel (Datum & Uhrzeit)</li>
+                            <li>Messwert, Einheit & Typ</li>
+                            <li>Eindeutige Identifikatoren (Pin & MAC-Adresse des ESP32)</li>
+                        </ol>
+                    </li>
+                </ul>
+                <pre>
+                    {
+                      "Id": 0,
+                      "Value": 23.5,
+                      "Unit": "Celsius",
+                      "Type": "Temperature",
+                      "SensorId": 1,
+                      "Sensor": null,
+                      "SensorIdReference": 101,
+                      "RecordedAt": "2026-01-12T14:49:04Z",
+                      "CreatedAt": "2026-01-12T14:49:04Z"
+                    }
+                </pre>
+                <h4>Zukunft & Skalierbarkeit:</h4>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Erweiterte Sensorik:</span> Integration von Lichtintensität, pH- 
+                        und EC-Werten.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Interaktion:</span> Automatisierte Alarmmeldungen bei kritischen 
+                        Grenzwerten sowie die aktive Steuerung der Vitalwerte durch Aktoren.Einleitung & Motivation
+                    </li>
+                </ul>
+            </article>
+        </div>
+    
+        <h2 class="intro-content-h2">Back&shy;end & Da&shy;ten&shy;ma&shy;na&shy;ge&shy;ment</h2>
+        <div class="intro-content-section">
+            <article>
+                <h3>API</h3>
+                <h4>Schnittstellendesign</h4>
+                <p>
+                    Die API agiert als zentraler Hub (Drehscheibe) des Systems. Sie entkoppelt die Datenerfassung 
+                    (Hardware) von der Datenvisualisierung (Frontend).
+                </p>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Architektur:</span> REST (Representational State Transfer).
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Format:</span> Datenaustausch erfolgt ausschließlich via JSON.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Vorteil:</span> Durch die Standardisierung können beliebig 
+                        viele verschiedene Clients (Blazor, WPF, Mobile Apps) dieselbe Datenquelle nutzen.
+                    </li>
+                </ul>
+                <h4>Security & Authentifizierung</h4>
+                <p>Im aktuellen Entwicklungsstadium liegt der Fokus auf der Funktionalität der Datenkette.</p>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Status Quo:</span> Da das System derzeit in einer 
+                        geschlossenen Umgebung operiert und keine personenbezogenen Daten verarbeitet, ist die API offen 
+                        zugänglich.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Ausblick:</span> Eine Erweiterung um JWT (JSON Web Tokens) 
+                        oder API-Keys ist im Architektur-Design vorgesehen, um den Zugriff in öffentlichen Netzen 
+                        abzusichern.
+                    </li>
+                </ul>
+                <h4>Der Prozess des Datenaustauschs (Data Flow)</h4>
+                <p>Der Datenaustausch folgt einem festen Protokoll, um Integrität zu gewährleisten:</p>
+                <ol>
+                    <li>
+                        <span class="intro-content-bold-text">Ingestion (Eingang):</span> Der ESP32 sendet einen 
+                        HTTP-POST Request an den Endpoint "/api/MeasurementCollection/ReceiveMeasurement".
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Mapping & Validierung:</span> Die API nimmt das JSON 
+                        entgegen, mappt es auf ein C#-DTO (Data Transfer Object) und validiert die Felder (z. B. 
+                        Zuordnung der MAC-Adresse zu einer Station oder Pin zu einem Sensor).
+                        
+                        <figure class="intro-content-figure">
+                            <img class="intro-content-image intro-content-figure-image-whtiespace"
+                                 src="pictures/Measurement-Object.png"
+                                 alt="Bild: Ablaufdiagramm"/>
+                            <figcaption class="intro-content-figure-caption-whtiespace">Abb. 1: Prozessablauf</figcaption>
+                        </figure>
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Persistierung:</span> Nach erfolgreicher Validierung wird 
+                        der Datensatz asynchron in die Datenbank geschrieben.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Distribution (Ausgang):</span> Die Frontends (Blazor/WPF) 
+                        rufen über HTTP-GET die aktuellsten Werte oder historische Verläufe ab.
+                    </li>
+                </ol>
+                <h3>Datenbank</h3>
+                <h4>Infrastruktur: PostgreSQL auf Raspberry Pi</h4>
+                <p>Das Herzstück der Datenhaltung ist eine PostgreSQL-Datenbank, die auf einem dedizierten Raspberry Pi 
+                    im lokalen Netzwerk betrieben wird.</p>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Aktueller Stand:</span> Die Datenbank läuft derzeit auf 
+                        der microSD-Karte des Systems. Aufgrund der überschaubaren Datenmenge des ersten Projektjahres 
+                        ist diese Lösung für die aktuelle Entwicklungsphase ausreichend.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Skalierbarkeit (Geplant):</span> Um das System für 
+                        Langzeit-Monitoring zu rüsten, ist die Erweiterung um TimescaleDB vorgesehen. Diese 
+                        Architektur-Entscheidung ermöglicht es, zeitabhängige Vitalwerte in "Hypertables" zu verarbeiten, 
+                        was die Performance bei wachsenden Datenmengen sicherstellt.
+                        - 
+                    </li>
+                </ul>
+                <h4>Datensicherheit & Resilienz (Roadmap)</h4>
+                <p>
+                    Ein stabiler IT-Betrieb erfordert den Schutz vor Datenverlust. Für die nächste Projektphase sind
+                    folgende Optimierungen definiert:
+                </p>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Sicherungsstrategie:</span> Die Implementierung 
+                        automatisierter SQL-Dumps (z.B. via Cronjob), um den Datenbestand auf einen externen 
+                        Netzwerkspeicher zu sichern.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Hardware-Schonung:</span> Um den Verschleiß der 
+                        microSD-Karte durch Datenbank-Schreibzugriffe zu minimieren, ist der Umzug der Datenbank auf 
+                        eine USB-SSD geplant.
+                    </li>
+                </ul>
+            </article>
+        </div>
+        
+    
+        <h2 class="intro-content-h2">Visualisierung (Frontend)</h2>
+        <div class="intro-content-section">
+            <article>
+                <p>Die Architektur des Frontends folgt dem Prinzip der Separation of Concerns. Während die API die Daten 
+                    liefert, sind die Frontends auf die Bedürfnisse unterschiedlicher Nutzerszenarien zugeschnitten.</p>
+                <h4>Effizienz durch Code-Sharing</h4>
+                <p>Trotz unterschiedlicher Plattformen teilen sich die Blazor- und die WPF-Anwendung eine gemeinsame 
+                    Basis: <br/>
+                    <span class="intro-content-bold-text">Shared Class Library:</span> Alle Data Transfer Objects (DTOs) 
+                    liegen in einer zentralen Bibliothek (DataAccess). Dies garantiert, dass Änderungen am Datenmodell 
+                    sofort konsistent in beiden Frontends verfügbar sind und vermeidet redundanten Code.
+                </p>
+                <h4>Blazor: Das globale Dashboard</h4>
+                <p>Die Blazor Web-App ist die primäre Schnittstelle für den mobilen, weltweiten Zugriff.</p>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Technologie: Nutzt Chart.js für die interaktive 
+                            Web-Visualisierung.</span>
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Fokus: Schnelle, plattformunabhängige Übersicht der 
+                            aktuellen Vitalwerte im Browser.</span>
+                    </li>
+                </ul>
+                <h4>WPF: Die Desktop-Zentrale</h4>
+                <p>Die WPF-Anwendung demonstriert die Erweiterbarkeit des Systems auf native Desktop-Umgebungen.
+
+                    - </p>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Technologie:</span> Nutzt ScottPlot für hochperformante 
+                        Datenvisualisierungen.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Einsatzzweck:</span> Lokale Verwaltung und tiefere Analyse 
+                        der Messwerte mit der Rechenleistung eines Desktop-PCs.
+                    </li>
+                </ul>
+                <h4>Datenvisualisierung: Wissen statt Daten</h4>
+                <p>Um die Messwerte interpretierbar zu machen, kommen zwei Darstellungsformen zum Einsatz:</p>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Tabellarische Ansicht:</span> Detailgenaue Auflistung der 
+                        Rohdaten inklusive Metadaten (MAC-Adresse, Pin-Belegung, exakter Zeitstempel).
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Graphische Analyse:</span> Visualisierung der Verläufe 
+                        über Zeitachsen. Durch den Einsatz spezialisierter Libraries (Chart.js im Web und ScottPlot auf 
+                        dem Desktop) werden Trends wie der Feuchtigkeitsverlust des Bodens oder Temperaturschwankungen 
+                        visuell aufbereitet.
+                    </li>
+                </ul>
+            </article>
+        </div>
+        
+    
+        <h2 class="intro-content-h2">Ausblick</h2>
+        <div class="intro-content-section intro-content-end">
+            <article class="">
+                <h3>Projekt-Reflexion</h3>
+                <p>
+                    Das Projekt "PlantStation" demonstriert die erfolgreiche Umsetzung einer vollständigen Datenkette – vom
+                    physikalischen Sensor im Boden bis zur visualisierten Information im Browser oder auf dem Desktop. Durch
+                    den Einsatz moderner Technologien wie ASP.NET Core, Blazor und PostgreSQL wurde ein skalierbares System
+                    geschaffen, das Hardware und Software effizient miteinander verbindet.
+                </p>
+                <h4>Die nächsten Schritte (Roadmap)</h4>
+                <p>
+                    Um die Stabilität und Professionalität des Systems weiter zu steigern, sind folgende Ausbaustufen
+                    geplant:
+                </p>
+                <ul>
+                    <li>
+                        <span class="intro-content-bold-text">Datenbank-Optimierung:</span> Umzug der PostgreSQL-Instanz 
+                        von der microSD-Karte auf eine USB-SSD, um die Hardware-Langlebigkeit zu erhöhen.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Performance-Upgrade:</span> Integration von TimescaleDB, 
+                        um auch bei mehrjährigen Datensätzen eine performante Abfrage der Zeitreihen zu garantieren.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Datensicherheit:</span> Implementierung einer 
+                        automatisierten Backup-Routine (SQL-Dumps) auf einen externen Netzwerkspeicher.
+                    </li>
+                    <li>
+                        <span class="intro-content-bold-text">Security-Layer:</span> 1. - - Einführung einer 
+                        JWT-basierten Authentifizierung für die API, um den Zugriff in öffentlichen Netzwerken 
+                        abzusichern.
+                    </li>
+                </ul>
+            </article>
+        </div>
+    </div>
+</div>
