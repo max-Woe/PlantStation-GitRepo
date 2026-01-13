@@ -33,7 +33,8 @@ namespace ChartsJsBlazorApp
             _httpHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
             _httpClient = new HttpClient(_httpHandler);
             //_httpClient.BaseAddress = new Uri("https://localhost:7028/api");//LOCAL
-            _httpClient.BaseAddress = new Uri("http://192.168.178.75:5000/api");//RASPBERRY PI
+            // _httpClient.BaseAddress = new Uri("http://192.168.178.75:5000/api");//RASPBERRY PI
+            _httpClient.BaseAddress = new Uri("http://localhost:5000/api");//RASPBERRY PI
             _logger = new SeriLoggingService();
         }
 
@@ -137,6 +138,7 @@ namespace ChartsJsBlazorApp
             catch (HttpRequestException e)
             {
                 Console.WriteLine($"Anfragefehler: {e.Message}");
+                
                 return new List<T>();
             }
         }
