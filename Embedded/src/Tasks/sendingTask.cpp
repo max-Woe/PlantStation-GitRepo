@@ -1,6 +1,5 @@
-
 #ifndef DEBUGMODE
-#define DEBUGMODE
+#define DEBUGMODE FALSE
 #endif
 
 #include <Tasks/sendingTask.h>
@@ -14,35 +13,48 @@ const int SHIFT_REGISTER_SIZE = 20;
 Measurement shiftRegister[SHIFT_REGISTER_SIZE];
 int shiftRegisterCount = 0;
 
-std::string tempUrl= "http://" + std::string(SERVERIP) + "/api/MeasurementCollection/ReceiveMeasurement";
-const char* serverUrl  = tempUrl.c_str();
+//std::string tempUrl= "http://" + std::string(SERVERIP) + "/api/MeasurementCollection/ReceiveMeasurement";
+//const char* serverUrl  = tempUrl.c_str();
 
 void sendingTask(void* parameter) 
 {
+    static char serverUrl[128];
+    static bool initialized = false;
+
+    if (!initialized) {
+        snprintf(serverUrl, sizeof(serverUrl), "http://%s/api/MeasurementCollection/ReceiveMeasurement", SERVERIP);
+        initialized = true;
+    }
+
     Serial.println("Sending Task gestartet.");
     Measurement currentMeasurement;
     HTTPClient http;
 
     while (true) 
     {
+        static char jsonBuffer[256];
+
         // Zuerst versuchen, Daten aus dem Schieberegister zu senden
         if (shiftRegisterCount > 0) 
         {
             for (int i = 0; i < shiftRegisterCount; i++) 
             {
+                shiftRegister[i].toStaticJson(jsonBuffer, sizeof(jsonBuffer));
                 http.begin(serverUrl);
                 http.addHeader("Content-Type", "application/json");
 
                 // Konvertiere das Measurement-Objekt in ein JSON-String
-                String jsonPayload = shiftRegister[i].toJson();
-                int httpResponseCode = http.POST(jsonPayload);
+                //String jsonPayload = shiftRegister[i].toJson();
+                //int httpResponseCode = http.POST(jsonPayload);
+                int httpResponseCode = http.POST((uint8_t*)jsonBuffer, strlen(jsonBuffer));
 
                 #ifdef DEBUGMODE
                 {
                     Serial.println("--------------------------------------------------------------");
                     Serial.println("Versuche, gespeicherte Daten zu senden...");
                     Serial.print("Payload: ");
-                    Serial.println(jsonPayload);
+                    //Serial.println(jsonPayload);
+                    Serial.println(jsonBuffer);
                     Serial.print("Senden an ServerURL: ");
                     Serial.println(serverUrl);
                     Serial.print("HTTP Response Code: ");
@@ -53,7 +65,8 @@ void sendingTask(void* parameter)
 
                 if (httpResponseCode > 0) 
                 {
-                    Serial.printf("Gespeicherten Wert erfolgreich gesendet, Server-Antwort: %s\n", http.getString().c_str());
+                    //Serial.printf("Gespeicherten Wert erfolgreich gesendet, Server-Antwort: %s\n", http.getString().c_str());
+                    Serial.printf("Daten erfolgreich gesendet, Code: %d\n", httpResponseCode);
                     // Verschiebe die restlichen Elemente im Array um eine Position nach vorne
                     for (int j = i; j < shiftRegisterCount - 1; j++) 
                     {
@@ -81,19 +94,24 @@ void sendingTask(void* parameter)
             }
 
             #endif
+
+            currentMeasurement.toStaticJson(jsonBuffer, sizeof(jsonBuffer));
+
             http.begin(serverUrl);
             http.addHeader("Content-Type", "application/json");
 
             // Konvertiere das Measurement-Objekt in einen JSON-String
-            String jsonPayload = currentMeasurement.toJson();
-            int httpResponseCode = http.POST(jsonPayload);
+            //String jsonPayload = currentMeasurement.toJson();
+            //int httpResponseCode = http.POST(jsonPayload);
+            int httpResponseCode = http.POST((uint8_t*)jsonBuffer, strlen(jsonBuffer));
 
             #ifdef DEBUGMODE
             {
                 Serial.println("--------------------------------------------------------------");
                 Serial.println("Versuche, neue Daten zu senden...");
                 Serial.print("Payload: ");
-                Serial.println(jsonPayload);
+                //Serial.println(jsonPayload);
+                Serial.println(jsonBuffer);
                 Serial.print("Senden an ServerURL: ");
                 Serial.println(serverUrl);
                 Serial.print("HTTP Response Code: ");
@@ -104,7 +122,8 @@ void sendingTask(void* parameter)
 
             if (httpResponseCode > 0) 
             {
-                Serial.printf("Daten erfolgreich gesendet, Server-Antwort: %s\n", http.getString().c_str());
+                //Serial.printf("Daten erfolgreich gesendet, Server-Antwort: %s\n", http.getString().c_str());
+                Serial.printf("Daten erfolgreich gesendet, Code: %d\n", httpResponseCode);
             } 
             else 
             {

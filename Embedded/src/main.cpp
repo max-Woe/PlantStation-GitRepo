@@ -1,4 +1,4 @@
-#define DEBUGMODE
+#define DEBUGMODE FALSE
 
 #include <DHT.h>
 #include <queue>
@@ -26,8 +26,9 @@ const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 3600; // GMT+1 Stunde
 const int daylightOffset_sec = 3600;
 
-String macAddressString;
-const char* macAddress;
+//String macAddressString;
+//const char* macAddress;
+char deviceMacAddress[18];
 
 void setup() 
 {
@@ -35,8 +36,10 @@ void setup()
 
     WiFi.begin(SSID, WIFI_PASSWORD);
     
-    macAddressString = WiFi.macAddress();
-    macAddress = macAddressString.c_str();
+    //macAddressString = WiFi.macAddress();
+    //macAddress = macAddressString.c_str();
+    strncpy(deviceMacAddress, WiFi.macAddress().c_str(), sizeof(deviceMacAddress));
+    deviceMacAddress[sizeof(deviceMacAddress) - 1] = '\0';
     
     while (WiFi.status() != WL_CONNECTED) 
     {

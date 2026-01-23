@@ -26,7 +26,8 @@ public:
     void setMacAddress(const char* macAddress);
     
     void print() const;
-    String toJson() const;
+    //String toJson() const;
+    void toStaticJson(char* buffer, size_t capacity) const;
 
 private:
     time_t _time;

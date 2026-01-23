@@ -1,5 +1,5 @@
 #ifndef DEBUGMODE
-#define DEBUGMODE
+#define DEBUGMODE FALSE
 #endif
 
 #include <Tasks/measurementTask.h>
@@ -17,6 +17,18 @@ const int soilMoisturePin = 32;
 const int soil_analog_wet = 930; // Nass
 const int soil_analog_dry = 2600; // Trocken
 
+const char* type_temperature = "temperature";
+const char* type_humidity = "humidity";
+const char* type_soil = "soil_moisture";
+const char* type_water_level = "water_level";
+
+const char* unit_temperature = "°C";
+const char* unit_humidity = "%rel";
+const char* unit_soil = "%";
+const char* unit_water_level = "%";
+
+extern char deviceMacAddress[18];
+
 DHT dht(dhtPin, DHT22);
 
 void measurementTask(void* parameter)
@@ -25,21 +37,12 @@ void measurementTask(void* parameter)
     int counter_max_1s = 100;
     int counter_runs = 1;
 
-    const char* type_temperature = "temperature";
-    const char* type_humidity = "humidity";
-    const char* type_soil = "soil_moisture";
-    const char* type_water_level = "water_level";
 
-    const char* unit_temperature = "°C";
-    const char* unit_humidity = "%rel";
-    const char* unit_soil = "%";
-    const char* unit_water_level = "%";
-
-    float tempReadings[60];
-    float humReadings[60];
-    float soilReadings_60s[60];
-    float soilReadings_1s[100];
-    float waterReadings[60];
+    static float tempReadings[60];
+    static float humReadings[60];
+    static float soilReadings_60s[60];
+    static float soilReadings_1s[100];
+    static float waterReadings[60];
 
     dht.begin();
 
@@ -76,7 +79,10 @@ void measurementTask(void* parameter)
         
         #ifdef DEBUGMODE
         {
-            Serial.print("Soil (Pin " + String(soilMoisturePin) + "): ");
+            //Serial.print("Soil (Pin " + String(soilMoisturePin) + "): ");
+            Serial.print("Soil (Pin ");
+            Serial.print(soilMoisturePin);
+            Serial.print("): ");
             for(int i = 0; i < counter; i++) 
             {
                 Serial.print(soilReadings_60s[i]);
@@ -90,8 +96,9 @@ void measurementTask(void* parameter)
 
             if (!getLocalTime(&timeinfo)) 
             {
-                Serial.println("Fehler beim Abrufen der Zeit");
-                return;
+                Serial.println("Fehler beim Abrufen der Zeit - überspringe Zyklus");
+                vTaskDelay(pdMS_TO_TICKS(1000));
+                continue;
             }
 
             Serial.println("Start Measurement processing...");
@@ -105,7 +112,8 @@ void measurementTask(void* parameter)
                 Serial.println(tempReadings[i]);
             }
 
-            Serial.println("-----------------Temp mean calculated.----------------" + String(temp_mean_60s));
+            Serial.print("-----------------Temp mean calculated.----------------");
+            Serial.println(temp_mean_60s);
 
             hum_mean_60s = Math::mean(humReadings, counter);
             soil_mean_60s = Math::mean(soilReadings_60s, counter);
@@ -120,23 +128,35 @@ void measurementTask(void* parameter)
                 Serial.print("Aktueller Zeitstempel: ");
                 Serial.println(current_timestamp);
                 
-                Serial.print(String(type_soil) +" (Pin:"+ String(soilMoisturePin) + "): ");
+                Serial.print(type_soil);
+                Serial.print(" (Pin:");
+                Serial.print(soilMoisturePin);
+                Serial.print("): ");
                 Serial.print(soil_mean_60s);
-                Serial.println(" " + String(unit_soil));
+                Serial.print(" ");
+                Serial.println(unit_soil);
                 Serial.println();
                 
-                Serial.print(String(type_temperature) +" (Pin:"+ String(dhtPin) + "):");
+                Serial.print(type_temperature);
+                Serial.print(" (Pin:");
+                Serial.print(dhtPin);
+                Serial.print("):");
                 Serial.print(temp_mean_60s);
-                Serial.println(" " + String(unit_temperature));
+                Serial.print(" ");
+                Serial.println(unit_temperature);
                 Serial.println();
 
-                Serial.print(String(type_humidity) +" (Pin:"+ String(dhtPin) + "): ");
+                Serial.print(type_humidity);
+                Serial.print(" (Pin:");
+                Serial.print(dhtPin);
+                Serial.print("): ");
                 Serial.print(hum_mean_60s);
-                Serial.println(" " + String(unit_humidity));
+                Serial.print(" ");
+                Serial.println(unit_humidity);
                 Serial.println();
             
                 Serial.print("Mac Adress: ");
-                Serial.println(macAddress);
+                Serial.println(deviceMacAddress);
                 Serial.println();
             
                 Serial.println("--------------------------------------------------------------");
@@ -144,15 +164,15 @@ void measurementTask(void* parameter)
             #endif
 
 
-            Measurement temperature_measurement(current_timestamp, temp_mean_60s, unit_temperature, type_temperature, dhtPin, macAddress);
+            Measurement temperature_measurement(current_timestamp, temp_mean_60s, unit_temperature, type_temperature, dhtPin, deviceMacAddress);
             xQueueSend(sendingQueue, &temperature_measurement, portMAX_DELAY);
             Serial.println("Temperature measurement queued.");
 
-            Measurement humidity_measurement(current_timestamp, hum_mean_60s, unit_humidity, type_humidity, dhtPin, macAddress);
+            Measurement humidity_measurement(current_timestamp, hum_mean_60s, unit_humidity, type_humidity, dhtPin, deviceMacAddress);
             xQueueSend(sendingQueue, &humidity_measurement, portMAX_DELAY);
             Serial.println("Humidity measurement queued.");
             
-            Measurement soil_measurement(current_timestamp, soil_mean_60s, unit_soil, type_soil, soilMoisturePin, macAddress);
+            Measurement soil_measurement(current_timestamp, soil_mean_60s, unit_soil, type_soil, soilMoisturePin, deviceMacAddress);
             xQueueSend(sendingQueue, &soil_measurement, portMAX_DELAY);
 
             Serial.println("Measurement processing done.");

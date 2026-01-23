@@ -35,7 +35,7 @@ void Measurement::print() const {
     Serial.print(", Pin: "); Serial.print(_pin);
     Serial.print(", MAC: "); Serial.println(_macAddress);
 }
-
+/*
 String Measurement::toJson() const {
     // Erstellt ein dynamisches JSON-Dokument.
     // Die Kapazität wird automatisch angepasst.
@@ -57,4 +57,19 @@ String Measurement::toJson() const {
     serializeJson(doc, jsonString);
     
     return jsonString;
+}
+    */
+void Measurement::toStaticJson(char* buffer, size_t capacity) const {
+    // StaticJsonDocument reserviert den Speicher auf dem Stack, nicht auf dem Heap
+    StaticJsonDocument<256> doc; 
+
+    doc["UnixTime"] = _time; 
+    doc["Value"] = _value;
+    doc["Unit"] = _unit;
+    doc["Type"] = _type;
+    doc["Pin"] = _pin;
+    doc["MacAddress"] = _macAddress;
+
+    // Schreibt das JSON direkt in den übergebenen char-Puffer
+    serializeJson(doc, buffer, capacity);
 }
