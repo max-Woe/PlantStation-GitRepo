@@ -10,6 +10,7 @@ using ChartJs.Blazor.Util;
 using ChartsJsBlazorApp;
 using ConverterService;
 using DataAccess.Models;
+using LoggingService;
 using Microsoft.AspNetCore.Components;
 // Fügen Sie hier alle fehlenden using-Anweisungen hinzu, die im ursprünglichen @code Block nicht enthalten waren
 // (z.B. für ApiClient, ChartJs, etc.)
@@ -33,6 +34,8 @@ namespace ChartsJsBlazorApp.Components.Pages
     {
         private List<Station> _avalibaleStations = new List<Station>();
         private List<(int, string)> _sensorIdsAndTypes = new List<(int, string)>();
+        private ILoggingService _logger = new SeriLoggingService();
+        
         public List<(int,string)> SensorIdsAndTypes 
         {
             get
@@ -112,6 +115,7 @@ namespace ChartsJsBlazorApp.Components.Pages
         // Die Konfiguration wird einmal initialisiert
         protected override async Task OnInitializedAsync()
         {
+            // _config = new LineConfig();
             _apiClient = new ApiClient();
 
             await FetchStations();
@@ -338,7 +342,14 @@ namespace ChartsJsBlazorApp.Components.Pages
                 _isSensorSelected = false;
             }
 
-            await InvokeAsync(StateHasChanged);
+            try
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "InvokeAsync(StateHasChanged)","HandleStationSelection",null);
+            }
         }
 
 
