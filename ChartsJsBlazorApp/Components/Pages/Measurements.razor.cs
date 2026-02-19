@@ -248,9 +248,6 @@ namespace ChartsJsBlazorApp.Components.Pages
 
         protected void InitializeConfig(double min, double max)
         {
-            // Da die LineConfig und die Chart-Klassen viele 'using's benötigen, 
-            // wird der Code hier leicht gekürzt, um die Lesbarkeit zu gewährleisten.
-
             _config = new LineConfig
             {
                 Options = new LineOptions

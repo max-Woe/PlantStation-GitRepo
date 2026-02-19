@@ -31,6 +31,9 @@ extern char deviceMacAddress[18];
 
 DHT dht(dhtPin, DHT22);
 
+const uint32_t REBOOT_INTERVAL = 24 * 60 * 60 * 1000; // 24 Stunden in Millisekunden
+
+
 void measurementTask(void* parameter)
 {
     int counter = 1;
@@ -50,6 +53,11 @@ void measurementTask(void* parameter)
     TickType_t xLastWakeTime;
     while (true) 
     {
+        if (millis() > REBOOT_INTERVAL) {
+            //Serial.println("Präventiver Neustart nach 24 Stunden Laufzeit...");
+            delay(1000); 
+            ESP.restart();
+        }
         const TickType_t xFrequency = pdMS_TO_TICKS(1000);
 
         xLastWakeTime = xTaskGetTickCount();
