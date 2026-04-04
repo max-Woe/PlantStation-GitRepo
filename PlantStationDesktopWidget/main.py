@@ -63,6 +63,9 @@ def main():
     sensor_repo = SensorRepo()
     mainWindowViewModel = MainWindowViewModel(station_repo=station_repo, sensor_repo=sensor_repo)
 
+    with open("StyleSheets/styles.css", "r") as file:
+        app.setStyleSheet(file.read())
+
     window = MainWindow(view_model=mainWindowViewModel)
     window.show()
 

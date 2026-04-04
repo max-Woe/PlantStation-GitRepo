@@ -1,0 +1,11 @@
+MainWindow {
+    background-color: "green";
+}
+
+QTabWidget {
+    background-color: "grey";
+}
+
+InfoWidget QLabel{
+    color: "black";
+}
