@@ -6,6 +6,7 @@ from DataAcces.Repositories.StationRepo import StationRepo
 from ViewModels.MainWindowViewModel import MainWindowViewModel
 from ViewModels.MeasurementWidgetViewModel import MeasurementsWidgetViewModel
 from Widgets.MeasurementsWidget import MeasurementsWidget
+from DataAcces.Models.Base import SessionLocal
 
 
 class MainWindow(QMainWindow):
@@ -41,7 +42,7 @@ class MainWindow(QMainWindow):
             for sensor_id in sensor_ids:
                 inner_tab_headline = f"Sensor {sensor_id}"
 
-                measurement_widget_view_model = MeasurementsWidgetViewModel(MeasurementRepo(), station_id, sensor_id)
+                measurement_widget_view_model = MeasurementsWidgetViewModel(MeasurementRepo(SessionLocal), station_id, sensor_id)
                 # Erstelle das Messwerte-Widget für diesen Sensor
                 measurement_widget = MeasurementsWidget(measurement_widget_view_model)
 

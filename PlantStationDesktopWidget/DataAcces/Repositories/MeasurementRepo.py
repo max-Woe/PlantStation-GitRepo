@@ -1,11 +1,11 @@
-from DataAcces.Models.Measurement import Measurement
+from DataAcces.Models.Measurement import Measurement, Base
 from DataAcces.DTOs.MeasurementDTO import MeasurementDTO
 import pandas as pd
 
 
 class MeasurementRepo:
 
-    def __init__(self, session_factory=SessionLocal):
+    def __init__(self, session_factory):
         self.session_factory = session_factory
 
     def get_all(self) -> pd.DataFrame:
