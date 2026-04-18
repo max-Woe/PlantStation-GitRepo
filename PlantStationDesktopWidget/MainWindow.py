@@ -22,6 +22,11 @@ class MainWindow(QMainWindow):
         # self.setWindowOpacity(0.8)
         self.setWindowTitle("PlantStation - Messwertübersicht")
         self.view_model = view_model
+        self.resize(1024, 768)
+        scale= 0.75
+        min_x = int(1024*scale)
+        min_y = int(768*scale)
+        self.setMinimumSize(min_x, min_y)
 
         self.outer_tabs_container = QTabWidget()
         self.inner_tabs_container = QTabWidget()
