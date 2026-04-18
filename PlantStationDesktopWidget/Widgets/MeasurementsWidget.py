@@ -1,5 +1,5 @@
 from Widgets import TimePickerWidget, PlotWidget, InfoWidget, RefreshWidget
-from PySide6.QtWidgets import QVBoxLayout, QWidget, QLabel
+from PySide6.QtWidgets import QVBoxLayout, QWidget, QLabel, QStackedWidget
 from PySide6.QtCore import Qt, QTimer
 from ViewModels.MeasurementWidgetViewModel import MeasurementsWidgetViewModel
 
@@ -18,15 +18,22 @@ class MeasurementsWidget(QWidget):
         self.layout.addWidget(self.time_picker_widget, 0)
 
         #------------------------------------PLOT---------------------------------------------------------------------#
-        if self._view_model.measurement_df.empty or len(self._view_model.measurement_df) <= 1:
-            self.plot_error_label = QLabel("Es liegen zu wenig Messdaten für einen Plott vor")
-            self.plot_error_label.setStyleSheet("color: red; ")
-            self.plot_error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.layout.addWidget(self.plot_error_label, 1)
-        else:
-            self.plot_widget = PlotWidget(self._view_model)
-            self.layout.addWidget(self.plot_widget, 1)
 
+        self.plot_widget = PlotWidget(self._view_model)
+
+        self.plot_error_label = QLabel("Es ist ein Fehler beim Plot aufgetreten!")
+        self.plot_error_label.setStyleSheet("color: red; ")
+        self.plot_error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.stack = QStackedWidget()
+        self.stack.addWidget(self.plot_widget)  # Index 0
+        self.stack.addWidget(self.plot_error_label)  # Index 1
+        self.layout.addWidget(self.stack)
+
+        if self._view_model.measurement_df.empty or len(self._view_model.measurement_df) <= 1:
+            self.stack.setCurrentWidget(self.plot_error_label)
+        else:
+            self.stack.setCurrentWidget(self.plot_widget)
 
             self.plot_widget.plot(self._view_model.measurement_df)
 
@@ -60,6 +67,14 @@ class MeasurementsWidget(QWidget):
     def update_all_displays(self):
         self._view_model.update_measurements()
         measurement_df = self._view_model.measurement_df
-        if measurement_df.iloc[0]["Type"] is not 'None':
+        if not measurement_df.empty and measurement_df.iloc[0]["Type"] is not 'None':
+            if self.stack.currentWidget() is not self.plot_widget:
+                self.stack.setCurrentWidget(self.plot_widget)
             self.plot_widget.plot(measurement_df)
             self.infoWidget.update_labels(measurement_df)
+        else:
+            if self.stack.currentWidget() is not self.plot_error_label:
+                self.stack.setCurrentWidget(self.plot_error_label)
+            self.layout.replaceWidget(self.plot_widget, self.plot_error_label)
+            self.plot_widget.hide()
+            self.plot_error_label.show()
