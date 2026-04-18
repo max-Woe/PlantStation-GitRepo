@@ -18,13 +18,20 @@ class MeasurementsWidget(QWidget):
         self.layout.addWidget(self.time_picker_widget, 0)
 
         #------------------------------------PLOT---------------------------------------------------------------------#
-        self.plot_widget = PlotWidget(self._view_model)
-        self.layout.addWidget(self.plot_widget, 1)
-        self.plot_widget.plot(self._view_model.measurement_df)
+        if self._view_model.measurement_df.empty or len(self._view_model.measurement_df) <= 1:
+            self.plot_error_label = QLabel("Es liegen zu wenig Messdaten für einen Plott vor")
+            self.plot_error_label.setStyleSheet("color: red; ")
+            self.plot_error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.layout.addWidget(self.plot_error_label, 1)
+        else:
+            self.plot_widget = PlotWidget(self._view_model)
+            self.layout.addWidget(self.plot_widget, 1)
+
+
+            self.plot_widget.plot(self._view_model.measurement_df)
 
         #------------------------------------LABELS-------------------------------------------------------------------#
-        if self._view_model.measurement_df is not None:
-
+        if not self._view_model.measurement_df.empty:
             self.infoWidget = InfoWidget(self._view_model.station_id, self._view_model.measurement_df)
             self.layout.addWidget(self.infoWidget, 0)
 
@@ -53,5 +60,6 @@ class MeasurementsWidget(QWidget):
     def update_all_displays(self):
         self._view_model.update_measurements()
         measurement_df = self._view_model.measurement_df
-        self.plot_widget.plot(measurement_df)
-        self.infoWidget.update_labels(measurement_df)
+        if measurement_df.iloc[0]["Type"] is not 'None':
+            self.plot_widget.plot(measurement_df)
+            self.infoWidget.update_labels(measurement_df)

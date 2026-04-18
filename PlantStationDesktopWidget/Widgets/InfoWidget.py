@@ -1,3 +1,4 @@
+import pandas as pd
 from PySide6.QtWidgets import QWidget, QGridLayout, QLabel
 from pandas import DataFrame
 
@@ -15,7 +16,8 @@ class InfoWidget(QWidget):
         self.unit_label = QLabel("#unit")
         self.type_label = QLabel("#type")
 
-        self.set_info_labels(station_id,self._df["SensorId"][0],self._df["Unit"][0],self._df["Type"][0])
+        if not self._df.empty:
+            self.set_info_labels(station_id,self._df["SensorId"][0],self._df["Unit"][0],self._df["Type"][0])
 
         self.grid_layout.addWidget(self.station_label, 0, 0)
         self.grid_layout.addWidget(self.sensor_label, 1, 0)
@@ -56,8 +58,11 @@ class InfoWidget(QWidget):
         self.current_value_label.setText(
             f"Current value: {self.df["Value"].iloc[-1]}")
         current_time = self.df['RecordedAt'].iloc[-1]
-        self.current_time_label.setText(
-            f"Current time: {current_time.strftime('%H:%M:%S %d-%m-%Y')}")
+
+        if self.df.iloc[-1]['RecordedAt'] is not pd.NaT:
+            self.current_time_label.setText(f"Current time: {current_time.strftime('%H:%M:%S %d-%m-%Y')}")
+        else:
+            self.current_time_label.setText(f"Current time: {current_time}")
 
         # statistic of the displayed measurements
         self.min_lable.setText(f"Min value: {self.df["Value"].min()}")
