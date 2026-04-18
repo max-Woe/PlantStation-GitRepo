@@ -1,38 +1,3 @@
-# import os
-# import sys
-#
-# # Den Pfad zum 'code'-Ordner feststellen
-# basedir = os.path.dirname(os.path.realpath(__file__))
-#
-# # Alle Unterordner für Python auffindbar machen
-# if basedir not in sys.path:
-#     sys.path.insert(0, basedir)
-#
-# # Arbeitsverzeichnis wechseln, damit secrets.json gefunden wird
-# os.chdir(basedir)
-#
-# import sys
-#
-# from PySide6.QtWidgets import QApplication, QMainWindow
-#
-# from DataAcces.Repositories.StationRepo import StationRepo
-# from DataAcces.Repositories.SensorRepo import SensorRepo
-# from MainWindow import MainWindow
-# from ViewModels.MainWindowViewModel import MainWindowViewModel
-#
-# app = QApplication(sys.argv)
-#
-# station_repo = StationRepo()
-# sensor_repo = SensorRepo()
-# mainWindowViewModel = MainWindowViewModel(station_repo = station_repo, sensor_repo = sensor_repo)
-#
-# window = MainWindow(view_model=mainWindowViewModel)
-# window.show()
-#
-# app.exec()
-
-
-
 import os
 import sys
 from PySide6.QtWidgets import QApplication
@@ -68,6 +33,8 @@ def main():
 
     window = MainWindow(view_model=mainWindowViewModel)
     window.show()
+    window.raise_()
+    window.activateWindow()
 
     sys.exit(app.exec())
 
