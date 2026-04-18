@@ -28,7 +28,7 @@ class MeasurementsWidgetViewModel(QObject):
                                    ("1 Tag", 24),
                                    ("30 Tage", 24*30),
                                    ("1 Jahr", 24*365)]
-        self.selected_radiobutton_index = 0
+        self.selected_radiobutton_index = 1
         self.selected_timespan = self.radiobutton_times[self.selected_radiobutton_index][1]
 
         self.measurement_df = None

@@ -6,7 +6,7 @@ class TimePickerWidget(QWidget):
 
     timeSpanChanged = Signal(int)
 
-    def __init__(self, radio_button_times: List[int], default_index=0):# parent_view_model):
+    def __init__(self, radio_button_times: List[int], default_index=1):# parent_view_model):
         super().__init__()
 
         self.radio_button_times = radio_button_times
