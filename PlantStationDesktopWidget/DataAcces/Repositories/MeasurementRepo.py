@@ -1,6 +1,10 @@
+from pandas.core.interchange.dataframe_protocol import DataFrame
+
 from DataAcces.Models.Measurement import Measurement, Base
 from DataAcces.DTOs.MeasurementDTO import MeasurementDTO
+from datetime import datetime
 import pandas as pd
+import numpy as np
 
 
 class MeasurementRepo:
@@ -46,15 +50,33 @@ class MeasurementRepo:
 
     def get_by_sensor_id_since(self, sensor_id: int, since: datetime) -> pd.DataFrame:
         with self.session_factory() as session:
-            query = session.query(Measurement).filter(Measurement.sensor_id == sensor_id, Measurement.recorded_at > since)
-            df = pd.read_sql(query.statement, session.bind)
+            try:
+                query = session.query(Measurement).filter(Measurement.sensor_id == sensor_id, Measurement.recorded_at > since)
 
-            if df.empty:
+                df = pd.read_sql(query.statement, session.bind)
+
+
+                df["RecordedAt"] = self.convert_time_to_local(df["RecordedAt"])
+
+                df = df[df.apply(self.is_measurement_valid, axis=1)].reset_index(drop=True)
+
+                if df.empty:
+                    new_row = {}
+                    for col in df.columns:
+                        if pd.api.types.is_numeric_dtype(df[col]):
+                            new_row[col] = np.nan
+                        elif pd.api.types.is_datetime64_any_dtype(df[col]):
+                            new_row[col] = pd.NaT
+                        else:
+                            new_row[col] = 'None'
+
+                    df.loc[0] = new_row
+
                 return df
 
-            df["RecordedAt"] = self.convert_time_to_local(df["RecordedAt"])
-
-            return df[df.apply(self.is_measurement_valid, axis=1)].reset_index(drop=True)
+            except Exception as e:
+                print(e)
+                return pd.DataFrame()
 
 
     @staticmethod
