@@ -30,10 +30,15 @@ namespace DataAccess.Repositories
                 return null;
             }
 
+            if (!MeasurementValueIsValid(measurement))
+            {
+                measurement = MarkInvalidValue(measurement);
+            }
+
             _logger.StartTimer();
 
             Sensor? sensor = await EnsureSensorExisting(measurement, null);
-
+            
             try
             {
                 await TryExecuteAsync(async () => await _context.Measurements.AddAsync(measurement),"AddAsync", "Create", measurement);
@@ -49,6 +54,7 @@ namespace DataAccess.Repositories
             {
                 _logger.StopTimer();
             }
+
         }
         /// <inheritdoc/>
         public async Task<Measurement?> Create(Measurement measurement, string? macAddress = null)
@@ -59,7 +65,14 @@ namespace DataAccess.Repositories
             }
 
             _logger.StartTimer();
+            
+            if (!MeasurementValueIsValid(measurement))
+            {
+                _logger.LogError(new NullReferenceException(), "ValidationCheck", "Create", null);
 
+                return null;
+            }
+            
             await EnsureSensorExisting(measurement, macAddress);
 
             try
@@ -93,6 +106,8 @@ namespace DataAccess.Repositories
                 return new List<Measurement>();
             }
 
+            measurements.RemoveAll(m => !MeasurementValueIsValid(m));
+            
             _logger.StartTimer();
 
             try
@@ -123,16 +138,19 @@ namespace DataAccess.Repositories
             }
         }
         
+
+        // ------------------------------------
+        // R - READ Operations
+        // ------------------------------------
+
         /// <inheritdoc/>
         public async Task<List<Measurement>> GetAllAsList()
         {
             _logger.StartTimer();
 
-            List<Measurement>? measurementsFromDb;
-
             try
             {
-                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.ToListAsync(), "ToListAsync", "GetAllAsList");
+                List<Measurement>? measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.ToListAsync(), "ToListAsync", "GetAllAsList");
 
                 if(measurementsFromDb == null)
                 {
@@ -140,7 +158,11 @@ namespace DataAccess.Repositories
 
                     return new List<Measurement>();
                 }
-
+                else if(measurementsFromDb.Any())
+                {
+                    measurementsFromDb.RemoveAll(m => !MeasurementValueIsValid(m));
+                }
+                
                 return measurementsFromDb;
             }
             catch (Exception ex)
@@ -180,6 +202,14 @@ namespace DataAccess.Repositories
                     return null;
                 }
 
+                if (!MeasurementValueIsValid(measurementFromDb))
+                {
+                    _logger.LogInformationText("Value of measurement is invalid.");
+                    _logger.StopTimer();
+
+                    return null;
+                }
+
                 return measurementFromDb;
             }
             catch (Exception)
@@ -196,19 +226,26 @@ namespace DataAccess.Repositories
         {
             _logger.StartTimer();
 
-            List<Measurement>? measurements = new List<Measurement>();
-
             try
             {
-                measurements = await TryExecuteAsync(async () => await _context.Measurements.Where(s => s.SensorId == sensorId).ToListAsync(),
+                List<Measurement>? measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(s => s.SensorId == sensorId).ToListAsync(),
                 "ToListAsync", "GetAllBySensorIdAsList", sensorId);
 
-                return measurements;
+                if (measurementsFromDb == null)
+                {
+                    measurementsFromDb = new List<Measurement>();
+                }
+                else if (measurementsFromDb.Any())
+                {
+                    measurementsFromDb.RemoveAll(m => !MeasurementValueIsValid(m));
+                }
+                
+                return measurementsFromDb;
             }
             catch (Exception)
             {
                 _logger.StopTimer();
-                return measurements;
+                return new List<Measurement>();
             }
             finally
             {
@@ -223,29 +260,31 @@ namespace DataAccess.Repositories
         /// <returns>A <see cref="List{T}"/> of the found <see cref="Measurement"/> objects. Invalid or non-existent IDs are ignored.</returns>
         public async Task<List<Measurement>> GetByListOfIds(List<int> ids)
         {
-            List<Measurement> measurementsFromDb = new List<Measurement>();
-
             if (ids.IsNullOrEmpty())
             {
-                return measurementsFromDb;
+                return new List<Measurement>();
             }
 
             _logger.StartTimer();
             
             try
             {
-                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => ids.Contains(m.Id) ).ToListAsync(), "Find.Where", "GetByListOfIds");
-
-                if(measurementsFromDb.IsNullOrEmpty())
+                List<Measurement>? measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => ids.Contains(m.Id) ).ToListAsync(), "Find.Where", "GetByListOfIds");
+              
+                if(measurementsFromDb == null)
                 {
-                    return new List<Measurement>();
+                    measurementsFromDb = new List<Measurement>();
+                }
+                else if(measurementsFromDb.Any())
+                {
+                    measurementsFromDb.RemoveAll(m => !MeasurementValueIsValid(m));
                 }
 
                 return measurementsFromDb;
             }
             catch (Exception)
             {
-                return measurementsFromDb;
+                return new List<Measurement>();
             }
             finally
             {
@@ -259,17 +298,26 @@ namespace DataAccess.Repositories
         public async Task<List<Measurement>> GetAll()
         {
             _logger.StartTimer();
-            List<Measurement>? measurementsFromDb = new List<Measurement>();
+            // List<Measurement>? measurementsFromDb = null;
 
             try
             {
-                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.ToListAsync(), "ToListAsync", "GetAll");
+                List<Measurement>? measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.ToListAsync(), "ToListAsync", "GetAll");
 
-                return measurementsFromDb!;
+                if (measurementsFromDb == null)
+                {
+                    measurementsFromDb = new List<Measurement>();
+                }
+                else if (measurementsFromDb.Any())
+                {
+                    measurementsFromDb.RemoveAll(m => !MeasurementValueIsValid(m));
+                }
+                
+                return measurementsFromDb;
             }
             catch (Exception)
             {
-                return measurementsFromDb!;
+                return new List<Measurement>();
             }
             finally 
             { 
@@ -290,24 +338,26 @@ namespace DataAccess.Repositories
 
             _logger.StartTimer();
 
-            List<Measurement>? measurementsFromDb = new List<Measurement>();
-
             try
             {
                 //measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt).Take(count).ToListAsync(), "ToListAsync", "GetLast");
-                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.SensorId == sensorId && m.RecordedAt>timeOfFirstMeasurement).OrderByDescending(m => m.RecordedAt).ToListAsync(), "ToListAsync", "GetLast");
+                List<Measurement>? measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.SensorId == sensorId && m.RecordedAt>timeOfFirstMeasurement).OrderByDescending(m => m.RecordedAt).ToListAsync(), "ToListAsync", "GetLast");
                 
-                if(measurementsFromDb.IsNullOrEmpty())
+                if(measurementsFromDb==null)
                 {
                     _logger.StopTimer();
                     return new List<Measurement>();
+                }
+                else if (measurementsFromDb.Any())
+                {
+                    measurementsFromDb.RemoveAll(m => !MeasurementValueIsValid(m));
                 }
 
                 return measurementsFromDb;
             }
             catch (Exception)
             {
-                return measurementsFromDb;
+                return new List<Measurement>();
             }
             finally
             {
@@ -320,25 +370,28 @@ namespace DataAccess.Repositories
         {
             _logger.StartTimer();
 
-            List<Measurement>? measurementsFromDb = new List<Measurement>();
 
             try
             {
-                var querry = _context.Measurements.Where(m => m.RecordedAt > since && m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt);
-                string sqlCommand = querry.ToQueryString();
-                measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m=> m.RecordedAt>since && m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt).ToListAsync(), "ToListAsync", "GetLastOfSensorSince");
+                List<Measurement>? measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m=> m.RecordedAt>since && m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt).ToListAsync(), "ToListAsync", "GetLastOfSensorSince");
                 
-                if(measurementsFromDb == null || measurementsFromDb.Count == 0)
+                if(measurementsFromDb == null)
                 {
                     _logger.StopTimer();
                     return new List<Measurement>();
                 }
+                 else if(measurementsFromDb.Any())
+                {
+                    measurementsFromDb.RemoveAll(m => !MeasurementValueIsValid(m));
+                }
 
+                _logger.StopTimer();
+                
                 return measurementsFromDb;
             }
             catch (Exception)
             {
-                return measurementsFromDb;
+                return new List<Measurement>();
             }
             finally
             {
@@ -364,6 +417,12 @@ namespace DataAccess.Repositories
                 if (measurementFromDb == null)
                 {
                     _logger.LogInformationText($"Measurement with the id {measurement.Id} not found in database.");
+                    return null;
+                }
+
+                if (!MeasurementValueIsValid(measurement))
+                {
+                    _logger.LogInformationText($"The value of the measurement with the id {measurement.Id} is invalid.");
                     return null;
                 }
 
@@ -394,9 +453,13 @@ namespace DataAccess.Repositories
         /// <returns>A <see cref="List{T}"/> of the successfully updated <see cref="Measurement"/> objects.</returns>
         public async Task<List<Measurement>> UpdateByList(List<Measurement> measurements)
         {
-            if(measurements.IsNullOrEmpty())
+            if(!measurements.Any())
             {
                 return new List<Measurement>();
+            }
+            else
+            {
+                measurements.RemoveAll(m => !MeasurementValueIsValid(m));
             }
 
             List<Measurement>? measurementsFromDb = new List<Measurement>();
@@ -646,6 +709,79 @@ namespace DataAccess.Repositories
             
             return sensor;
         }
+        
+        private bool MeasurementValueIsValid(Measurement measurement)
+        {
+            switch (measurement.Type)
+            {
+                case "temperature":
+                    if (measurement.Value > 600 | measurement.Value < -40)
+                    {
+                        _logger.LogError(new NullReferenceException(), "ValidationCheck", "Create", null);
+                        return false;
+                    }
+                    break;
+                case "humidity":
+                    if (measurement.Value > 100 | measurement.Value < 0)
+                    {
+                        _logger.LogError(new NullReferenceException(), "ValidationCheck", "Create", null);
+                        return false;
+                    }
+                    break;
+                case "soil_moisture":
+                    if (measurement.Value > 100 | measurement.Value < 0)
+                    {
+                        _logger.LogError(new NullReferenceException(), "ValidationCheck", "Create", null);
+                        return false;
+                    }
+                    break;
+            }
+            return true;
+        }
+        
+        
+        private Measurement MarkInvalidValue(Measurement measurement)
+        {
+            switch (measurement.Type)
+            {
+                case "temperature":
+                    if(measurement.Value < -40)
+                    {
+                        measurement.Value = -41;
+                    }
 
+                    if (measurement.Value > 600)
+                    {
+                        measurement.Value = 601;
+                    }
+                    break;
+                    
+                case "humidity":
+                    if (measurement.Value < 0)
+                    {
+                        measurement.Value = -1;
+                    }
+
+                    if (measurement.Value > 100)
+                    {
+                        measurement.Value = 101;
+                    }
+                    break;
+                    
+                case "soil_moisture":
+                    if (measurement.Value < 0)
+                    {
+                        measurement.Value = -1;
+                    }
+
+                    if (measurement.Value > 100)
+                    {
+                        measurement.Value = 101;
+                    }
+                    break;
+            }
+
+            return measurement;
+        }
     }
 }
