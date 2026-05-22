@@ -1,5 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, DateTime
 from datetime import datetime, timezone
 
 from DataAcces.Models.Base import Base

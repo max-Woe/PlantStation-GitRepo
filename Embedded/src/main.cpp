@@ -1,4 +1,4 @@
-#define DEBUGMODE FALSE
+#define DEBUGMODE_MAIN FALSE
 
 #include <DHT.h>
 #include <queue>
@@ -33,22 +33,40 @@ char deviceMacAddress[18];
 void setup() 
 {
     Serial.begin(9600);
-
-    WiFi.begin(SSID, WIFI_PASSWORD);
+ 
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     
+    #ifdef DEBUGMODE_MAIN
+    {
+        int i = 0;
+        while (WiFi.status() != WL_CONNECTED) 
+        {
+            i++;
+            delay(500);
+            Serial.print(".");
+            if(i%50==0)
+            {
+                Serial.print("Status: ");
+                Serial.println(WiFi.status());
+                Serial.print("Tries to conntect to wifi ");
+                Serial.print(SSID);
+                Serial.print(" with PW ");
+                Serial.print(WIFI_PASSWORD);
+                Serial.print("; ");
+                Serial.println(i);
+            }
+        }
+    }
+    #endif
+    
+
+    Serial.println("\nVerbindung erfolgreich!");
+  
     //macAddressString = WiFi.macAddress();
     //macAddress = macAddressString.c_str();
     strncpy(deviceMacAddress, WiFi.macAddress().c_str(), sizeof(deviceMacAddress));
     deviceMacAddress[sizeof(deviceMacAddress) - 1] = '\0';
-    
-    while (WiFi.status() != WL_CONNECTED) 
-    {
-        delay(500);
-        Serial.print(".");
-    }
-
-    Serial.println("\nVerbindung erfolgreich!");
-    
+      
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
     sendingQueue = xQueueCreate(10, sizeof(Measurement));
@@ -76,6 +94,7 @@ void setup()
             NULL,
             0
         );
+        
     } 
     else 
     {

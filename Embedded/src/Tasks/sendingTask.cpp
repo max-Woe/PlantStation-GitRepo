@@ -1,5 +1,5 @@
-#ifndef DEBUGMODE
-#define DEBUGMODE FALSE
+#ifndef DEBUGMODE_SEND
+#define DEBUGMODE_SEND FALSE
 #endif
 
 #include <Tasks/sendingTask.h>
@@ -48,7 +48,7 @@ void sendingTask(void* parameter)
                 //int httpResponseCode = http.POST(jsonPayload);
                 int httpResponseCode = http.POST((uint8_t*)jsonBuffer, strlen(jsonBuffer));
 
-                #ifdef DEBUGMODE
+                #if DEBUGMODE_SEND
                 {
                     Serial.println("--------------------------------------------------------------");
                     Serial.println("Versuche, gespeicherte Daten zu senden...");
@@ -66,7 +66,7 @@ void sendingTask(void* parameter)
                 if (httpResponseCode > 0) 
                 {
                     //Serial.printf("Gespeicherten Wert erfolgreich gesendet, Server-Antwort: %s\n", http.getString().c_str());
-                    Serial.printf("Daten erfolgreich gesendet, Code: %d\n", httpResponseCode);
+                    //Serial.printf("Daten erfolgreich gesendet, Code: %d\n", httpResponseCode);
                     // Verschiebe die restlichen Elemente im Array um eine Position nach vorne
                     for (int j = i; j < shiftRegisterCount - 1; j++) 
                     {
@@ -77,7 +77,7 @@ void sendingTask(void* parameter)
                 } 
                 else 
                 {
-                    Serial.printf("Fehler beim Senden der gespeicherten Daten. HTTP Response Code: %d\n", httpResponseCode);
+                    //Serial.printf("Fehler beim Senden der gespeicherten Daten. HTTP Response Code: %d\n", httpResponseCode);
                     // Abbruch, wenn das Senden fehlschlägt, um die Verbindung nicht zu überlasten
                     break;
                 }
@@ -88,7 +88,7 @@ void sendingTask(void* parameter)
         // Dann versuchen, neue Daten aus der Queue zu senden
         if (xQueueReceive(sendingQueue, &currentMeasurement, portMAX_DELAY) == pdTRUE) 
         {
-            #ifdef DEBUGMODE
+            #if DEBUGMODE_SEND
             {
                 Serial.print("Neue Messung aus der Queue erhalten: ");
             }
@@ -105,7 +105,7 @@ void sendingTask(void* parameter)
             //int httpResponseCode = http.POST(jsonPayload);
             int httpResponseCode = http.POST((uint8_t*)jsonBuffer, strlen(jsonBuffer));
 
-            #ifdef DEBUGMODE
+            #if DEBUGMODE_SEND
             {
                 Serial.println("--------------------------------------------------------------");
                 Serial.println("Versuche, neue Daten zu senden...");
@@ -123,7 +123,7 @@ void sendingTask(void* parameter)
             if (httpResponseCode > 0) 
             {
                 //Serial.printf("Daten erfolgreich gesendet, Server-Antwort: %s\n", http.getString().c_str());
-                Serial.printf("Daten erfolgreich gesendet, Code: %d\n", httpResponseCode);
+                //Serial.printf("Daten erfolgreich gesendet, Code: %d\n", httpResponseCode);
             } 
             else 
             {

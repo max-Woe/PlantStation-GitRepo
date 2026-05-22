@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QGridLayout, QLabel
+from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QVBoxLayout
 from PySide6.QtGui import QPixmap, QPainter
 from PySide6.QtCore import Qt
 
@@ -32,23 +32,31 @@ class PlotWidget(QWidget):
 
         self.current_cursor = None
 
+        self.background_image = QWidget()
+        self.background_image.setStyleSheet("background-color: rgb(255, 255, 255); ")
+
+        self.background_layout = QVBoxLayout(self.background_image)
+
         # 2. Logo Setup (Hintergrund)
         self.logo_label = QLabel()
-        self.logo_label.setAlignment(Qt.AlignCenter)
+        self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Pfad zum Logo
         base_path = Path(__file__).resolve().parent
-        logo_path = base_path.parent.parent / 'images' / 'Logo' / 'PlantStationLogo_KreisGreen1000x1000.png'
+        self.logo_path_green = base_path.parent.parent / 'images' / 'Logo' / 'PlantStationLogo_KreisGreen1000x1000.png'
+        self.logo_path_yellow = base_path.parent.parent / 'images' / 'Logo' / 'PlantStationLogo_KreisYellow1000x1000.png'
+        self.logo_path_red = base_path.parent.parent / 'images' / 'Logo' / 'PlantStationLogo_KreisRed1000x1000.png'
 
-        if logo_path.exists():
-            original_pixmap = QPixmap(str(logo_path))
+        if self.logo_path_green.exists():
+            original_pixmap = QPixmap(str(self.logo_path_green))
             # Wir speichern das Pixmap, um es beim Resize-Event proportional zu skalieren
             self.logo_pixmap = original_pixmap
         else:
             self.logo_pixmap = None
 
         # 3. Widgets im Layout stapeln (Beide in Zeile 0, Spalte 0)
-        self.main_layout.addWidget(self.logo_label, 0, 0)
+        self.background_layout.addWidget(self.logo_label)
+        self.main_layout.addWidget(self.background_image, 0, 0)
         self.main_layout.addWidget(self.canvas, 0, 0)
 
     def resizeEvent(self, event):
@@ -60,15 +68,15 @@ class PlotWidget(QWidget):
             target_height = self.height() * 0.6
 
             scaled_pixmap = self.logo_pixmap.scaled(
-                target_width,
-                target_height,
-                Qt.KeepAspectRatio,
-                Qt.SmoothTransformation
+                int(target_width),
+                int(target_height),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
             )
 
             # Transparenz des Pixmaps direkt setzen (0.15 entspricht 15% Deckkraft)
             transparent_pixmap = QPixmap(scaled_pixmap.size())
-            transparent_pixmap.fill(Qt.transparent)
+            transparent_pixmap.fill(Qt.GlobalColor.transparent)
             painter = QPainter(transparent_pixmap)
             painter.setOpacity(0.6)
             painter.drawPixmap(0, 0, scaled_pixmap)
@@ -132,3 +140,11 @@ class PlotWidget(QWidget):
 
         self.fig.autofmt_xdate()
         self.canvas.draw()
+
+    def change_logo_color(self, color:str):
+        if (color == "green"):
+            self.logo_pixmap = QPixmap(str(self.logo_path_green))
+        elif(color == "yellow"):
+            self.logo_pixmap = QPixmap(str(self.logo_path_yellow))
+        elif(color == "red"):
+            self.logo_pixmap = QPixmap(str(self.logo_path_red))

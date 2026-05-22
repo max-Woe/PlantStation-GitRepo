@@ -1,6 +1,6 @@
-from PySide6.QtCore import QObject, Signal, Property
+from PySide6.QtCore import QObject, Signal
 
-from DataAcces.Repositories import SensorRepo
+from DataAcces.Repositories.SensorRepo import SensorRepo
 from DataAcces.Repositories.StationRepo import StationRepo
 
 
@@ -14,7 +14,7 @@ class MainWindowViewModel(QObject):
         self._sensor_repo = sensor_repo
 
         self._list_of_stations = None
-        self._list_of_station_and_sensor_ids_as_tuples = []
+        self._station_sensor_pairs = []
         self._status = "Initializing"
 
         self.load_stations_as_list()
@@ -31,13 +31,14 @@ class MainWindowViewModel(QObject):
 
     def load_stations_as_list(self):
         self._list_of_stations = self._station_repo.get_all_station_ids()
+        self._list_of_stations.sort()
 
     def load_stations_and_sensors_as_list_of_tuples(self):
-        station_ids = self._station_repo.get_all_station_ids()
-        for station_id in station_ids:
-            sensor_ids = self._sensor_repo.get_sensor_ids_by_station_id(station_id)
-            self._list_of_station_and_sensor_ids_as_tuples.append((station_id, sensor_ids))
-            # for sensor_id in sensor_ids:
-            #     self._list_of_station_and_sensor_ids_as_tuples.append((station_id, sensor_id))
 
-    # status = Property(str, getStatus, setStatus, notify=statusChanged)
+        stations = self._station_repo.get_all()
+
+        for index, station in stations.iterrows():
+            sensors= self._sensor_repo.get_sensors_by_station_id(station['Id'])
+            self._station_sensor_pairs.append((station, sensors))
+
+        self._station_sensor_pairs.sort(key = lambda pair: pair[0]['Id'])

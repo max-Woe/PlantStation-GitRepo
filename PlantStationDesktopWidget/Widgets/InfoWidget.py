@@ -51,21 +51,22 @@ class InfoWidget(QWidget):
         self.type_label.setText(f"Type: {sensor_type}")
 
     def update_labels(self, df:DataFrame):
-        # self.df = DataFrame()
-        self.df = df
+        self._df = df
 
         # Current measurement
         self.current_value_label.setText(
-            f"Current value: {self.df["Value"].iloc[-1]}")
-        current_time = self.df['RecordedAt'].iloc[-1]
+            f"Current value: {self._df["Value"].iloc[0]:.2f}")
+        current_time = self._df['RecordedAt'].iloc[0]
 
-        if self.df.iloc[-1]['RecordedAt'] is not pd.NaT:
+        if self._df.iloc[-1]['RecordedAt'] is not pd.NaT:
             self.current_time_label.setText(f"Current time: {current_time.strftime('%H:%M:%S %d-%m-%Y')}")
         else:
             self.current_time_label.setText(f"Current time: {current_time}")
 
         # statistic of the displayed measurements
-        self.min_lable.setText(f"Min value: {self.df["Value"].min()}")
-        self.max_lable.setText(f"Max value: {self.df["Value"].max()}")
-        self.mean_lable.setText(f"Mean value: {self.df["Value"].mean()}")
-        self.median_lable.setText(f"Median value: {self.df["Value"].median()}")
+        if self._df['Value'][0] != 'None':
+            test = self._df["Value"][0]
+            self.min_lable.setText(f"Min value: {self._df["Value"].min():.2f}")
+            self.max_lable.setText(f"Max value: {self._df["Value"].max():.2f}")
+            self.mean_lable.setText(f"Mean value: {self._df["Value"].mean():.2f}")
+            self.median_lable.setText(f"Median value: {self._df["Value"].median():.2f}")

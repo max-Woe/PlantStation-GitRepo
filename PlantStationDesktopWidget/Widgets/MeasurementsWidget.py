@@ -1,8 +1,9 @@
+
 from Widgets import TimePickerWidget, PlotWidget, InfoWidget, RefreshWidget
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QLabel, QStackedWidget
 from PySide6.QtCore import Qt, QTimer
 from ViewModels.MeasurementWidgetViewModel import MeasurementsWidgetViewModel
-
+from HelperServices.MeasurementValidationService import ValidationStatus
 
 class MeasurementsWidget(QWidget):
 
@@ -19,29 +20,9 @@ class MeasurementsWidget(QWidget):
 
         #------------------------------------PLOT---------------------------------------------------------------------#
 
-        self.plot_widget = PlotWidget(self._view_model)
-
-        self.plot_error_label = QLabel("Es ist ein Fehler beim Plot aufgetreten!")
-        self.plot_error_label.setStyleSheet("color: red; ")
-        self.plot_error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.stack = QStackedWidget()
-        self.stack.addWidget(self.plot_widget)  # Index 0
-        self.stack.addWidget(self.plot_error_label)  # Index 1
-        self.layout.addWidget(self.stack)
-
-        if self._view_model.measurement_df.empty or len(self._view_model.measurement_df) <= 1:
-            self.stack.setCurrentWidget(self.plot_error_label)
-        else:
-            self.stack.setCurrentWidget(self.plot_widget)
-
-            self.plot_widget.plot(self._view_model.measurement_df)
-
+        self.init_plot_section()
         #------------------------------------LABELS-------------------------------------------------------------------#
-        if not self._view_model.measurement_df.empty:
-            self.infoWidget = InfoWidget(self._view_model.station_id, self._view_model.measurement_df)
-            self.layout.addWidget(self.infoWidget, 0)
-
+        self.init_information_labels()
         #---------------------------------------------------REFRESH-BUTTON--------------------------------------------#
         self.refresh_widget = RefreshWidget(self._view_model)
         self.refresh_widget.button_clicked.connect(self.on_refresh_button_clicked)
@@ -57,6 +38,64 @@ class MeasurementsWidget(QWidget):
         self.timer.timeout.connect(self.on_refresh_button_clicked)
         self.timer.start(60*1000)
 
+
+    def init_plot_section(self):
+        self.plot_widget = PlotWidget(self._view_model)
+
+        self.plot_error_label = QLabel("Es ist ein Fehler beim Plot aufgetreten!")
+        self.plot_error_label.setStyleSheet("color: red; font-size: 25px; font-weight: bold;")
+        self.plot_error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.stack = QStackedWidget()
+        self.stack.addWidget(self.plot_widget)  # Index 0
+        self.stack.addWidget(self.plot_error_label)  # Index 1
+        self.layout.addWidget(self.stack)
+
+        if (self._view_model.validation_status == ValidationStatus.PARTIAL_VALID or
+                self._view_model.validation_status == ValidationStatus.ALL_VALID):
+
+            if self._view_model.measurement_df.empty or len(self._view_model.measurement_df) <= 1:
+                self.stack.setCurrentWidget(self.plot_error_label)
+            else:
+                self.stack.setCurrentWidget(self.plot_widget)
+
+            self.change_logo_color()
+
+            self.plot_widget.plot(self._view_model.measurement_df)
+
+        else:
+            if self.stack.currentWidget() is not self.plot_error_label:
+                self.stack.setCurrentWidget(self.plot_error_label)
+            self.layout.replaceWidget(self.plot_widget, self.plot_error_label)
+            self.plot_widget.hide()
+
+            if self._view_model.validation_status == ValidationStatus.INVALID:
+                self.plot_error_label.setText("Die Messwerte für diesen Zeitraum sind alle unzulässig, es liegt "
+                                              "vermutlich ein Fehler mit dem Sensor vor..")
+            elif self._view_model.validation_status == ValidationStatus.EMPTY:
+                self.plot_error_label.setText("Es existieren keine Messwerte für diesen Zeitraum.")
+            self.plot_error_label.show()
+
+    def init_information_labels(self):
+        if (self._view_model.validation_status == ValidationStatus.PARTIAL_VALID or
+                self._view_model.validation_status == ValidationStatus.ALL_VALID):
+            if not self._view_model.measurement_df.empty:
+                self.infoWidget = InfoWidget(self._view_model.station_id, self._view_model.measurement_df)
+                self.layout.addWidget(self.infoWidget, 0)
+
+        else:
+            if self.stack.currentWidget() is not self.plot_error_label:
+                self.stack.setCurrentWidget(self.plot_error_label)
+            self.layout.replaceWidget(self.plot_widget, self.plot_error_label)
+            self.plot_widget.hide()
+
+            if self._view_model.validation_status == ValidationStatus.INVALID:
+                self.plot_error_label.setText("Die Messwerte für diesen Zeitraum sind alle unzulässig, es liegt "
+                                              "vermutlich ein Fehler mit dem Sensor vor..")
+            elif self._view_model.validation_status == ValidationStatus.EMPTY:
+                self.plot_error_label.setText("Es existieren keine Messwerte für diesen Zeitraum.")
+            self.plot_error_label.show()
+
     def on_time_changed(self, hours):
         self._view_model.selected_timespan = hours
         self.update_all_displays()
@@ -66,15 +105,70 @@ class MeasurementsWidget(QWidget):
 
     def update_all_displays(self):
         self._view_model.update_measurements()
-        measurement_df = self._view_model.measurement_df
-        if not measurement_df.empty and measurement_df.iloc[0]["Type"] is not 'None':
+
+        if (self._view_model.validation_status == ValidationStatus.ALL_VALID or
+                self._view_model.validation_status == ValidationStatus.PARTIAL_VALID):
+            measurement_df = self._view_model.measurement_df
+
             if self.stack.currentWidget() is not self.plot_widget:
                 self.stack.setCurrentWidget(self.plot_widget)
+
+            self.change_logo_color()
+
             self.plot_widget.plot(measurement_df)
             self.infoWidget.update_labels(measurement_df)
+
         else:
             if self.stack.currentWidget() is not self.plot_error_label:
                 self.stack.setCurrentWidget(self.plot_error_label)
             self.layout.replaceWidget(self.plot_widget, self.plot_error_label)
             self.plot_widget.hide()
+
+            if self._view_model.validation_status == ValidationStatus.INVALID:
+                self.plot_error_label.setText("Die Messwerte für diesen Zeitraum sind alle unzulässig, es liegt "
+                                              "vermutlich ein Fehler am dem Sensor vor.")
+            elif self._view_model.validation_status == ValidationStatus.EMPTY:
+                self.plot_error_label.setText("Es existieren keine Messwerte für diesen Zeitraum.")
+            else:
+                self.plot_error_label.setText("Es gab einen Fehler bei der Validierung.")
+
             self.plot_error_label.show()
+
+            if self.stack.currentWidget() is not self.plot_error_label:
+                self.stack.setCurrentWidget(self.plot_error_label)
+
+            self.layout.replaceWidget(self.plot_widget, self.plot_error_label)
+            self.plot_widget.hide()
+            self.plot_error_label.show()
+
+    def change_logo_color(self):
+        measurement_df = self._view_model.measurement_df
+
+        type = measurement_df.at[measurement_df.index[0], 'Type']
+        value = measurement_df.at[measurement_df.index[0], 'Value']
+
+        if type == "temperature":
+            if value >= 15 and value < 30:
+                self.plot_widget.change_logo_color("green")
+            elif (value >= 30 and value < 45) or (value < 15 and value >= 5):
+                self.plot_widget.change_logo_color("yellow")
+            else:
+                self.plot_widget.change_logo_color("red")
+
+        elif type == "humidity":
+            if value >= 50 and value < 70:
+                self.plot_widget.change_logo_color("green")
+            elif (value >= 70) or (value < 50 and value >= 40):
+                self.plot_widget.change_logo_color("yellow")
+            else:
+                self.plot_widget.change_logo_color("red")
+
+        elif type == "soil_moisture":
+            if value >= 25 and value < 60:
+                self.plot_widget.change_logo_color("green")
+            elif (value >= 60 and value < 80) or (value < 25 and value >= 15):
+                self.plot_widget.change_logo_color("yellow")
+            else:
+                self.plot_widget.change_logo_color("red")
+
+

@@ -1,5 +1,5 @@
-#ifndef DEBUGMODE
-#define DEBUGMODE FALSE
+#ifndef DEBUGMODE_MEAS
+#define DEBUGMODE_MEAS TRUE
 #endif
 
 #include <Tasks/measurementTask.h>
@@ -14,8 +14,23 @@
 const int dhtPin = 4;
 const int soilMoisturePin = 32;
 
-const int soil_analog_wet = 930; // Nass
-const int soil_analog_dry = 2600; // Trocken
+//Maximalwerte als Rohwerte aus der Kalibrierung
+//// NASS
+//const int soil_analog_wet_raw = 400;// Sensor A 
+const int soil_analog_wet_raw = 500;// Sensor B Station 18
+//const int soil_analog_wet_raw = 400;// Sensor C 
+//const int soil_analog_wet_raw = 800;// Sensor D Station 27
+//// TROCKEN
+//const int soil_analog_dry_raw = 2400;// Sensor A
+const int soil_analog_dry_raw = 2400;// Sensor B Station 18
+//const int soil_analog_dry_raw = 2400;// Sensor C
+//const int soil_analog_dry_raw = 2500;// Sensor D Station 27
+
+int soil_analog_raw_delta = soil_analog_dry_raw-soil_analog_wet_raw;
+
+//Maximalwerte mit einem 10% Sicherheitspuffer.
+const int soil_analog_wet = soil_analog_wet_raw-soil_analog_raw_delta*0.1; // Nass
+const int soil_analog_dry = soil_analog_dry_raw+soil_analog_raw_delta*0.1; // Trocken
 
 const char* type_temperature = "temperature";
 const char* type_humidity = "humidity";
@@ -71,31 +86,33 @@ void measurementTask(void* parameter)
 
 
             soilReadings_1s[i] = soil_analog;
+            delayMicroseconds(5);
         }
 
-        int soil_mean_1s = Math::mean(soilReadings_1s, counter_max_1s);
+        float soil_median_1s = Math::median(soilReadings_1s, counter_max_1s);
 
-        float soil =  map(soil_mean_1s, soil_analog_dry, soil_analog_wet, 0, 100);
+        float soil =  map(soil_median_1s, soil_analog_dry, soil_analog_wet, 0, 100);
         
-        float temp_mean_60s;
-        float hum_mean_60s;
-        float soil_mean_60s;
+        float temp_median_60s;
+        float hum_median_60s;
+        float soil_median_60s;
         
         tempReadings[counter-1] = temp;
         humReadings[counter-1] = hum;
         soilReadings_60s[counter-1] = soil;
         
-        #ifdef DEBUGMODE
+        #ifdef DEBUGMODE_MEAS
         {
-            //Serial.print("Soil (Pin " + String(soilMoisturePin) + "): ");
-            Serial.print("Soil (Pin ");
-            Serial.print(soilMoisturePin);
-            Serial.print("): ");
-            for(int i = 0; i < counter; i++) 
-            {
-                Serial.print(soilReadings_60s[i]);
-                Serial.print(" ");
-            }
+            Serial.println(soil_median_1s);
+            // Serial.print("Soil (Pin " + String(soilMoisturePin) + "): ");
+            // Serial.print("Soil (Pin ");
+            // Serial.print(soil);
+            // Serial.print("): ");
+            // for(int i = 0; i < counter; i++) 
+            // {
+            //     Serial.print(soilReadings_60s[i]);
+            //     Serial.print(" ");
+            // }
         }
         #endif
         if(counter >= 60) 
@@ -112,75 +129,98 @@ void measurementTask(void* parameter)
             Serial.println("Start Measurement processing...");
 
             time_t current_timestamp = mktime(&timeinfo);
-            temp_mean_60s = Math::mean(tempReadings, counter);
+            temp_median_60s = Math::median(tempReadings, counter);
 
             Serial.println(counter);
+            /*
             for (int i = 0; i < 60; i++) 
             {
                 Serial.println(tempReadings[i]);
             }
-
-            Serial.print("-----------------Temp mean calculated.----------------");
-            Serial.println(temp_mean_60s);
-
-            hum_mean_60s = Math::mean(humReadings, counter);
-            soil_mean_60s = Math::mean(soilReadings_60s, counter);
+            Serial.print("-----------------Temp median calculated.----------------");
+            Serial.println(temp_median_60s);
+            */
+            hum_median_60s = Math::median(humReadings, counter);
+            soil_median_60s = Math::median(soilReadings_60s, counter);
             
-            #ifdef DEBUGMODE
+            #ifdef DEBUGMODE_MEAS
             {
-                Serial.println("--------------------------------------------------------------");
+                // Serial.println("--------------------------------------------------------------");
 
-                Serial.print("Durchlauf: ");
-                Serial.println(counter_runs); 
+                // Serial.print("Durchlauf: ");
+                // Serial.println(counter_runs); 
                 
-                Serial.print("Aktueller Zeitstempel: ");
-                Serial.println(current_timestamp);
+                // Serial.print("Aktueller Zeitstempel: ");
+                // Serial.println(current_timestamp);
                 
-                Serial.print(type_soil);
-                Serial.print(" (Pin:");
-                Serial.print(soilMoisturePin);
-                Serial.print("): ");
-                Serial.print(soil_mean_60s);
-                Serial.print(" ");
-                Serial.println(unit_soil);
-                Serial.println();
+                // Serial.print(type_soil);
+                // Serial.print(" (Pin:");
+                // Serial.print(soilMoisturePin);
+                // Serial.print("): ");
+                // Serial.print(soil_median_60s);
+                // Serial.print(" ");
+                // Serial.println(unit_soil);
+                // Serial.println();
                 
-                Serial.print(type_temperature);
-                Serial.print(" (Pin:");
-                Serial.print(dhtPin);
-                Serial.print("):");
-                Serial.print(temp_mean_60s);
-                Serial.print(" ");
-                Serial.println(unit_temperature);
-                Serial.println();
+                // Serial.print(type_temperature);
+                // Serial.print(" (Pin:");
+                // Serial.print(dhtPin);
+                // Serial.print("):");
+                // Serial.print(temp_median_60s);
+                // Serial.print(" ");
+                // Serial.println(unit_temperature);
+                // Serial.println();
 
-                Serial.print(type_humidity);
-                Serial.print(" (Pin:");
-                Serial.print(dhtPin);
-                Serial.print("): ");
-                Serial.print(hum_mean_60s);
-                Serial.print(" ");
-                Serial.println(unit_humidity);
-                Serial.println();
+                // Serial.print(type_humidity);
+                // Serial.print(" (Pin:");
+                // Serial.print(dhtPin);
+                // Serial.print("): ");
+                // Serial.print(hum_median_60s);
+                // Serial.print(" ");
+                // Serial.println(unit_humidity);
+                // Serial.println();
             
-                Serial.print("Mac Adress: ");
-                Serial.println(deviceMacAddress);
-                Serial.println();
+                // Serial.print("Mac Adress: ");
+                // Serial.println(deviceMacAddress);
+                // Serial.println();
             
-                Serial.println("--------------------------------------------------------------");
+                // Serial.println("--------------------------------------------------------------");
             }
             #endif
 
-
-            Measurement temperature_measurement(current_timestamp, temp_mean_60s, unit_temperature, type_temperature, dhtPin, deviceMacAddress);
+            if(temp_median_60s>50)
+            {
+                temp_median_60s=999;
+            }
+            else if(temp_median_60s<-30)
+            {
+                temp_median_60s=-999;
+            }
+            Measurement temperature_measurement(current_timestamp, temp_median_60s, unit_temperature, type_temperature, dhtPin, deviceMacAddress);
             xQueueSend(sendingQueue, &temperature_measurement, portMAX_DELAY);
             Serial.println("Temperature measurement queued.");
 
-            Measurement humidity_measurement(current_timestamp, hum_mean_60s, unit_humidity, type_humidity, dhtPin, deviceMacAddress);
+            if(hum_median_60s>100)
+            {
+                hum_median_60s=999;
+            }
+            else if(hum_median_60s<0)
+            {
+                hum_median_60s=-999;
+            }
+            Measurement humidity_measurement(current_timestamp, hum_median_60s, unit_humidity, type_humidity, dhtPin, deviceMacAddress);
             xQueueSend(sendingQueue, &humidity_measurement, portMAX_DELAY);
             Serial.println("Humidity measurement queued.");
             
-            Measurement soil_measurement(current_timestamp, soil_mean_60s, unit_soil, type_soil, soilMoisturePin, deviceMacAddress);
+            if(soil_median_60s>100)
+            {
+                soil_median_60s=999;
+            }
+            else if(soil_median_60s<0)
+            {
+                soil_median_60s=-999;
+            }
+            Measurement soil_measurement(current_timestamp, soil_median_60s, unit_soil, type_soil, soilMoisturePin, deviceMacAddress);
             xQueueSend(sendingQueue, &soil_measurement, portMAX_DELAY);
 
             Serial.println("Measurement processing done.");
@@ -199,7 +239,7 @@ void measurementTask(void* parameter)
 
             counter++;
         }
-        #ifdef DEBUGMODE
+        #ifdef DEBUGMODE_MEAS
         {
             counter_runs++;
         }

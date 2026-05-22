@@ -1,13 +1,15 @@
-import os
+
 import sys
 import json
+from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), "../../", relative_path))
+        return Path(sys._MEIPASS) / relative_path
+    return (Path(__file__).resolve().parent / "../../" / relative_path).resolve()
+
 
 Base = declarative_base()
 
