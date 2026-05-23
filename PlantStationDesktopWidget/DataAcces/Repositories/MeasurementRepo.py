@@ -1,8 +1,11 @@
+import pandas as pd
+import sqlalchemy
+import logging
 from DataAcces.Models.Measurement import Measurement
 from datetime import datetime
 from typing import cast
-import pandas as pd
 
+logger = logging.getLogger(__name__)
 
 class MeasurementRepo:
 
@@ -11,42 +14,71 @@ class MeasurementRepo:
 
     def get_all(self) -> pd.DataFrame:
         with self.session_factory() as session:
-            query = session.query(Measurement)
-            df = pd.read_sql(query.statement, session.bind)
-            df = cast(pd.DataFrame, df)
+            try:
+                query = session.query(Measurement)
+                df = pd.read_sql(query.statement, session.bind)
+                df = cast(pd.DataFrame, df)
 
-            if df.empty:
+                if not df.empty:
+                    df["RecordedAt"] = self.convert_time_to_local(df["RecordedAt"])
+
+                return df
+
+            except sqlalchemy.exc.ProgrammingError as ex:
+                # Schema-Mismatch, Tabelle existiert nicht
+                logger.error(f"DB schema error: {ex}")
                 return pd.DataFrame()
 
-            df["RecordedAt"] = self.convert_time_to_local(df["RecordedAt"])
-
-            return df
+            except sqlalchemy.exc.InvalidRequestError as ex:
+                # Session-Problem
+                logger.error(f"DB session error: {ex}")
+                return pd.DataFrame()
 
     def get_by_id(self, measurement_id: int) -> pd.DataFrame:
         with self.session_factory() as session:
-            query = session.query(Measurement).filter(Measurement.id == measurement_id)
-            df = pd.read_sql(query.statement, session.bind)
-            df = cast(pd.DataFrame, df)
+            try:
+                query = session.query(Measurement).filter(Measurement.id == measurement_id)
+                df = pd.read_sql(query.statement, session.bind)
+                df = cast(pd.DataFrame, df)
 
-            if df.empty:
+                if df.empty:
+                    return pd.DataFrame()
+
+                df["RecordedAt"] = self.convert_time_to_local(df["RecordedAt"])
+
+                return df
+
+            except sqlalchemy.exc.ProgrammingError as ex:
+                # Schema-Mismatch, Tabelle existiert nicht
+                logger.error(f"DB schema error: {ex}")
                 return pd.DataFrame()
 
-            df["RecordedAt"] = self.convert_time_to_local(df["RecordedAt"])
-
-            return df
+            except sqlalchemy.exc.InvalidRequestError as ex:
+                # Session-Problem
+                logger.error(f"DB session error: {ex}")
+                return pd.DataFrame()
 
     def get_by_sensor_id(self, sensor_id: int) -> pd.DataFrame:
         with self.session_factory() as session:
-            query = session.query(Measurement).filter(Measurement.sensor_id == sensor_id)
-            df = pd.read_sql(query.statement, session.bind)
-            df = cast(pd.DataFrame, df)
+            try:
+                query = session.query(Measurement).filter(Measurement.sensor_id == sensor_id)
+                df = pd.read_sql(query.statement, session.bind)
+                df = cast(pd.DataFrame, df)
 
-            if df.empty:
+                if not df.empty:
+                    df["RecordedAt"] = self.convert_time_to_local(df["RecordedAt"])
+
+                return df
+
+            except sqlalchemy.exc.ProgrammingError as ex:
+                # Schema-Mismatch, Tabelle existiert nicht
+                logger.error(f"DB schema error: {ex}")
                 return pd.DataFrame()
 
-            df["RecordedAt"] = self.convert_time_to_local(df["RecordedAt"])
-
-            return df
+            except sqlalchemy.exc.InvalidRequestError as ex:
+                # Session-Problem
+                logger.error(f"DB session error: {ex}")
+                return pd.DataFrame()
 
     def get_by_sensor_id_since(self, sensor_id: int, since: datetime) -> pd.DataFrame:
         with self.session_factory() as session:
@@ -55,15 +87,22 @@ class MeasurementRepo:
 
                 df = pd.read_sql(query.statement, session.bind)
                 df = cast(pd.DataFrame, df)
-                df["RecordedAt"] = self.convert_time_to_local(df["RecordedAt"])
-                df.sort_values(by="RecordedAt", ascending=False, inplace=True)
-                df.drop_duplicates(subset=['RecordedAt'])
-                df.reset_index(drop=True, inplace=True)
+                if not df.empty:
+                    df["RecordedAt"] = self.convert_time_to_local(df["RecordedAt"])
+                    df.sort_values(by="RecordedAt", ascending=False, inplace=True)
+                    df.drop_duplicates(subset=['RecordedAt'])
+                    df.reset_index(drop=True, inplace=True)
 
                 return df
 
-            except Exception as e:
-                print(e)
+            except sqlalchemy.exc.ProgrammingError as ex:
+                # Schema-Mismatch, Tabelle existiert nicht
+                logger.error(f"DB schema error: {ex}")
+                return pd.DataFrame()
+
+            except sqlalchemy.exc.InvalidRequestError as ex:
+                # Session-Problem
+                logger.error(f"DB session error: {ex}")
                 return pd.DataFrame()
 
 
