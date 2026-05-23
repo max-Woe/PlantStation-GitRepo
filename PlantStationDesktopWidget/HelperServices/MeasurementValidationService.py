@@ -18,7 +18,7 @@ def validate_dataframe(df_original: pd.DataFrame) -> ValidationStatus:
 
     df = df_original.copy()
 
-    df_cleared = clear(df)
+    df_cleared = clear_by_limits(df)
 
     if df_cleared.empty:
         return ValidationStatus.INVALID
@@ -43,7 +43,7 @@ def validate_single_measurement(row: pd.Series) -> ValidationStatus:
             return ValidationStatus.INVALID
 
 
-def clear(df_original: pd.DataFrame) -> pd.DataFrame:
+def clear_by_limits(df_original: pd.DataFrame) -> pd.DataFrame:
     temperature_mask = (df_original['Type'] == 'temperature') & df_original['Value'].between(-30, 70)
     humidity_mask = (df_original['Type'] == 'humidity') & df_original['Value'].between(0, 100)
     soil_moisture_mask = (df_original['Type'] == 'soil_moisture') & df_original['Value'].between(0, 100)

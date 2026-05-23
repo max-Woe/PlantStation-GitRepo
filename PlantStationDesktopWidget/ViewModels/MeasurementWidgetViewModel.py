@@ -83,7 +83,7 @@ class MeasurementsWidgetViewModel(QObject):
         self.validation_status = MeasurementValidationService.validate_dataframe(df)
 
         if self.validation_status == ValidationStatus.ALL_VALID or self.validation_status == ValidationStatus.PARTIAL_VALID:
-            self.measurement_df = MeasurementValidationService.clear(df)
+            self.measurement_df = MeasurementValidationService.clear_by_limits(df)
             if self.measurement_df is not None:
                 self._last_update_time = datetime.now(timezone.utc)
 
