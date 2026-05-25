@@ -12,11 +12,11 @@ class MeasurementsWidgetViewModel(QObject):
 
     valuesChanged = Signal(DataFrame)
 
-    def __init__(self, measurement_repo: MeasurementRepo, station_id: int, sensor_id: int):#, station_repo: StationRepo):
+    def __init__(self, measurement_repo: MeasurementRepo, measurement_validation_service: MeasurementValidationService, station_id: int, sensor_id: int):#, station_repo: StationRepo):
         super().__init__()
 
         self._measurement_repo = measurement_repo
-
+        self._validation_service = measurement_validation_service
         self.measurements_df_is_valid_flag = False      #True: at least two value are valid; False: all values are invalid.
         self.measurements_df_contains_invalid_values_flag = False #True: any value is invalid; False: all values are valid
         self.measurement_df_is_empty_flag = True        #True: the dataframe is empty; False: the dataframe got entries.
@@ -80,10 +80,10 @@ class MeasurementsWidgetViewModel(QObject):
     def update_measurements(self):
         since = self.selected_timespan
         df = self._measurement_repo.get_by_sensor_id_since(self.sensor_id, since)
-        self.validation_status = MeasurementValidationService.validate_dataframe(df)
+        self.validation_status = self._validation_service.validate_dataframe(df)
 
         if self.validation_status == ValidationStatus.ALL_VALID or self.validation_status == ValidationStatus.PARTIAL_VALID:
-            self.measurement_df = MeasurementValidationService.clear_by_limits(df)
+            self.measurement_df = self._validation_service.clear_by_limits(df)
             if self.measurement_df is not None:
                 self._last_update_time = datetime.now(timezone.utc)
 
