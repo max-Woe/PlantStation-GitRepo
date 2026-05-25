@@ -1,3 +1,5 @@
+import mplcursors
+import sys
 from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QVBoxLayout
 from PySide6.QtGui import QPixmap, QPainter
 from PySide6.QtCore import Qt
@@ -5,10 +7,15 @@ from PySide6.QtCore import Qt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from pathlib import Path
-import mplcursors
 from numpy.ma.core import ceil, floor
 from pandas import DataFrame
 
+def resource_path(relative_path: str) -> Path:
+    """Gibt den korrekten Pfad zurück – im Dev-Modus und im PyInstaller-Bundle."""
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller entpackt Dateien nach _MEIPASS
+        return Path(sys._MEIPASS) / relative_path
+    return Path(__file__).resolve().parent.parent.parent / relative_path
 
 class PlotWidget(QWidget):
     def __init__(self, parent_view_model):
@@ -43,9 +50,9 @@ class PlotWidget(QWidget):
 
         # Pfad zum Logo
         base_path = Path(__file__).resolve().parent
-        self.logo_path_green = base_path.parent.parent / 'images' / 'Logo' / 'PlantStationLogo_KreisGreen1000x1000.png'
-        self.logo_path_yellow = base_path.parent.parent / 'images' / 'Logo' / 'PlantStationLogo_KreisYellow1000x1000.png'
-        self.logo_path_red = base_path.parent.parent / 'images' / 'Logo' / 'PlantStationLogo_KreisRed1000x1000.png'
+        self.logo_path_green = resource_path('images/Logo/PlantStationLogo_KreisGreen1000x1000.png')
+        self.logo_path_yellow = resource_path('images/Logo/PlantStationLogo_KreisYellow1000x1000.png')
+        self.logo_path_red = resource_path('images/Logo/PlantStationLogo_KreisRed1000x1000.png')
 
         if self.logo_path_green.exists():
             original_pixmap = QPixmap(str(self.logo_path_green))
