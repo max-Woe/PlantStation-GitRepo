@@ -1,0 +1,6 @@
+PySide6
+pandas
+SQLAlchemy
+psycopg2-binary
+matplotlib
+mplcursors
