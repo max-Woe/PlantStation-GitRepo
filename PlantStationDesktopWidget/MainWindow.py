@@ -3,6 +3,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 
 from DataAcces.Repositories.MeasurementRepo import MeasurementRepo
+from HelperServices.MeasurementValidationService import MeasurementValidationService
+from Tests.HelperServices.MeasurementValidationService.test_MeasurementValidationService import validation_service
 from ViewModels.DataBaseDialogViewModel import DataBaseDialogViewModel
 from ViewModels.MainWindowViewModel import MainWindowViewModel
 from ViewModels.MeasurementWidgetViewModel import MeasurementsWidgetViewModel
@@ -59,8 +61,11 @@ class MainWindow(QMainWindow):
                 sensor_type = sensor['Type']
 
                 inner_tab_headline = f"{sensor_type}, #{sensor_id}"
-
-                measurement_widget_view_model = MeasurementsWidgetViewModel(MeasurementRepo(SessionLocal), station_id, sensor_id)
+                measurement_validation_service = MeasurementValidationService()
+                measurement_widget_view_model = MeasurementsWidgetViewModel(MeasurementRepo(SessionLocal),
+                                                                            measurement_validation_service,
+                                                                            station_id,
+                                                                            sensor_id)
                 # Erstelle das Messwerte-Widget für diesen Sensor
                 measurement_widget = MeasurementsWidget(measurement_widget_view_model)
 
