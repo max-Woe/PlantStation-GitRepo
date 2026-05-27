@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget, QLabel, QStackedWidget
 from PySide6.QtCore import Qt, QTimer
 from ViewModels.MeasurementWidgetViewModel import MeasurementsWidgetViewModel
 from HelperServices.MeasurementValidationService import ValidationStatus
+from HelperServices.ColorManagementService import ColorManagementService
 
 class MeasurementsWidget(QWidget):
 
@@ -11,6 +12,8 @@ class MeasurementsWidget(QWidget):
         super().__init__()
 
         self._view_model = view_model
+        self._color_management_service = ColorManagementService()
+
         self.layout = QVBoxLayout(self)
 
         #-----------------------------------BUTTONS-------------------------------------------------------------------#
@@ -147,28 +150,6 @@ class MeasurementsWidget(QWidget):
         type = measurement_df.at[measurement_df.index[0], 'Type']
         value = measurement_df.at[measurement_df.index[0], 'Value']
 
-        if type == "temperature":
-            if value >= 15 and value < 30:
-                self.plot_widget.change_logo_color("green")
-            elif (value >= 30 and value < 45) or (value < 15 and value >= 5):
-                self.plot_widget.change_logo_color("yellow")
-            else:
-                self.plot_widget.change_logo_color("red")
-
-        elif type == "humidity":
-            if value >= 50 and value < 70:
-                self.plot_widget.change_logo_color("green")
-            elif (value >= 70) or (value < 50 and value >= 40):
-                self.plot_widget.change_logo_color("yellow")
-            else:
-                self.plot_widget.change_logo_color("red")
-
-        elif type == "soil_moisture":
-            if value >= 25 and value < 60:
-                self.plot_widget.change_logo_color("green")
-            elif (value >= 60 and value < 80) or (value < 25 and value >= 15):
-                self.plot_widget.change_logo_color("yellow")
-            else:
-                self.plot_widget.change_logo_color("red")
-
-
+        self._color_management_service.set_current_limits(type)
+        color = self._color_management_service.get_logo_color(value)
+        self.plot_widget.change_logo_color(color)

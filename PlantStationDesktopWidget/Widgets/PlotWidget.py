@@ -109,14 +109,14 @@ class PlotWidget(QWidget):
         y_max = ceil(measurements_df["Value"].max() / 10) * 10
         y_min = floor(measurements_df["Value"].min() / 10) * 10
 
-        color = 'black'
+        color_line = 'black'
         match measurements_df["Type"].iloc[0]:
             case "temperature":
-                color = 'red'
+                color_line = 'red'
             case "humidity":
-                color = 'blue'
+                color_line = 'blue'
             case "soil_moisture":
-                color = 'brown'
+                color_line = 'brown'
 
         self.ax.clear()
 
@@ -125,7 +125,7 @@ class PlotWidget(QWidget):
 
         # Plotten der Daten (zorder=2 damit über dem Grid)
         line = self.ax.plot(measurements_df['RecordedAt'], measurements_df["Value"],
-                            color=color, label='Rohdaten', zorder=2)
+                            color=color_line, label='Rohdaten', zorder=2)
 
         # Achsen-Konfiguration
         self.ax.set_title(measurements_df["Type"].iloc[0].capitalize())
