@@ -28,12 +28,12 @@ public class ApiContextFactory : IDesignTimeDbContextFactory<ApiContext>
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
             .AddUserSecrets<ApiContextFactory>()
             .Build();
-
-        string connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        
+        string connectionString = configuration["ConnectionString:MyDb"]
+                                  ?? throw new InvalidOperationException("Connection string 'ConnectionString:MyDb' not found.");
 
         var optionsBuilder = new DbContextOptionsBuilder<ApiContext>();
-        optionsBuilder.UseNpgsql(connectionString);
+        optionsBuilder.UseNpgsql(connectionString, options => options.CommandTimeout(300));
 
         return new ApiContext(optionsBuilder.Options);
     }

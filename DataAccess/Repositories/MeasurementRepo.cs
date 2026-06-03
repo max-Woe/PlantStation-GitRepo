@@ -22,7 +22,7 @@ namespace DataAccess.Repositories
         /// </summary>
         /// <param name="measurement">The <see cref="Measurement"/> to store.</param>
         /// <returns>The stored measurement or <c>null</c> on error.</returns>
-        public async Task<Measurement?> Create(Measurement measurement)
+        public async Task<Measurement?> Create(Measurement? measurement)
         {
             if (measurement == null)
             {

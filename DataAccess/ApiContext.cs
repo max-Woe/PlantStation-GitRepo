@@ -5,7 +5,7 @@ using DataAccess.Interfaces;
 namespace DataAccess;
 
 /// <summary>
-/// Represents an Database Context for Database access.
+/// Represents a Database Context for Database access.
 /// </summary>
 public class ApiContext : DbContext, IApiContext
 {
@@ -45,7 +45,7 @@ public class ApiContext : DbContext, IApiContext
     public DbSet<PlantName> PlantNames { get; set; }
 
     /// <summary>
-    /// Gets or sets the PlantTyope entity.
+    /// Gets or sets the PlantType entity.
     /// </summary>
     public DbSet<PlantType> PlantTypes { get; set; }
 
@@ -53,6 +53,11 @@ public class ApiContext : DbContext, IApiContext
     /// Gets or sets the TypeCharacteristic entity.
     /// </summary>
     public DbSet<TypeCharacteristic> TypeCharacteristics { get; set; }
+
+    /// <summary>
+    /// Gets or sets the TypeCharacteristic entity.
+    /// </summary>
+    public DbSet<AnalogMeasurement> AnalogMeasurements { get; set; }
 
     /// <summary>
     /// Constructor of the ApiContext.

@@ -26,12 +26,14 @@ public class Measurement:IJsonSerializable
     /// <summary>
     /// Gets or sets the unit.
     /// </summary>
-    public string Unit { get; set; }
+    [MaxLength(50)]
+    public required string Unit { get; set; }
     
     /// <summary>
     /// Gets or sets the type.
     /// </summary>
-    public string Type { get; set; }   
+    [MaxLength(50)]
+    public required string Type { get; set; }   
 
     /// <summary>
     /// Gets or sets the sensor id.
