@@ -5,6 +5,7 @@ class Math {
 public:
     static int mean(int* values, int count);
     static float mean(float* values, float count);
+    static float median(float* values, int count);
 };
 
 #endif 

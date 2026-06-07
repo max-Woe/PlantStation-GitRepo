@@ -11,6 +11,7 @@
 #include "Models/measurement.h"
 #include "Services/math.h"
 #include "Tasks/measurementTask.h"
+#include "Tasks/soilMoistureMeasurementTask.h"
 #include "Tasks/sendingTask.h"
 
 
@@ -77,7 +78,17 @@ void setup()
 
         xTaskCreatePinnedToCore(
             measurementTask,
-            "Sensor Task",
+            "All Measurements Task",
+            4096,
+            NULL,
+            1,
+            NULL,
+            1
+        );
+
+        xTaskCreatePinnedToCore(
+            soilMoistureMeasurementTask,
+            "Soil Moisture Measurement Task",
             4096,
             NULL,
             1,
