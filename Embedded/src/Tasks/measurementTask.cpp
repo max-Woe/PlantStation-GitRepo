@@ -9,7 +9,8 @@
 
 #include <Models/measurement.h>
 #include <Services/math.h>
-
+#include "measurementTask.h"
+#include <HelperServices/measurementHelper.h>
 
 const int dhtPin = 4;
 const int soilMoisturePin = 32;
@@ -66,37 +67,20 @@ void measurementTask(void* parameter)
 
     struct tm timeinfo;
     TickType_t xLastWakeTime;
+    const TickType_t xFrequency = pdMS_TO_TICKS(1000);
     while (true) 
     {
-        if (millis() > REBOOT_INTERVAL) {
-            //Serial.println("Präventiver Neustart nach 24 Stunden Laufzeit...");
-            delay(1000); 
-            ESP.restart();
-        }
-        const TickType_t xFrequency = pdMS_TO_TICKS(1000);
+        CheckForRestart();
 
         xLastWakeTime = xTaskGetTickCount();
-
         float temp = dht.readTemperature();
         float hum = dht.readHumidity();
-        
-        for(int i = 0; i<100; i++) 
-        {
-            int soil_analog = analogRead(soilMoisturePin);
 
-
-            soilReadings_1s[i] = soil_analog;
-            delayMicroseconds(5);
-        }
+        CollectSamples(soilMoisturePin, soilReadings_1s, 100);
 
         float soil_median_1s = Math::median(soilReadings_1s, counter_max_1s);
-
-        float soil =  map(soil_median_1s, soil_analog_dry, soil_analog_wet, 0, 100);
-        
-        float temp_median_60s;
-        float hum_median_60s;
-        float soil_median_60s;
-        
+        float soil =  soil_median_1s;//map(soil_median_1s, soil_analog_dry, soil_analog_wet, 0, 100);// TODO: !!!!!!!!!!!Mapping nach dem Kalibrieren des Temp-Drift wieder aktivieren!!!!!!!!!!!!!!!
+                
         tempReadings[counter-1] = temp;
         humReadings[counter-1] = hum;
         soilReadings_60s[counter-1] = soil;
@@ -117,6 +101,10 @@ void measurementTask(void* parameter)
         #endif
         if(counter >= 60) 
         { 
+            float temp_median_60s;
+            float hum_median_60s;
+            float soil_median_60s;
+
             Serial.println();
 
             if (!getLocalTime(&timeinfo)) 
@@ -130,6 +118,8 @@ void measurementTask(void* parameter)
 
             time_t current_timestamp = mktime(&timeinfo);
             temp_median_60s = Math::median(tempReadings, counter);
+            hum_median_60s = Math::median(humReadings, counter);
+            soil_median_60s = Math::median(soilReadings_60s, counter);
 
             Serial.println(counter);
             /*
@@ -140,8 +130,6 @@ void measurementTask(void* parameter)
             Serial.print("-----------------Temp median calculated.----------------");
             Serial.println(temp_median_60s);
             */
-            hum_median_60s = Math::median(humReadings, counter);
-            soil_median_60s = Math::median(soilReadings_60s, counter);
             
             #ifdef DEBUGMODE_MEAS
             {
@@ -187,7 +175,10 @@ void measurementTask(void* parameter)
                 // Serial.println("--------------------------------------------------------------");
             }
             #endif
-
+            
+            int temp_bounds[2] = {-30,50};
+            temp_median_60s = ValidateMeasurement(temp_median_60s, temp_bounds);
+            /*
             if(temp_median_60s>50)
             {
                 temp_median_60s=999;
@@ -195,11 +186,14 @@ void measurementTask(void* parameter)
             else if(temp_median_60s<-30)
             {
                 temp_median_60s=-999;
-            }
+            }*/
             Measurement temperature_measurement(current_timestamp, temp_median_60s, unit_temperature, type_temperature, dhtPin, deviceMacAddress);
             xQueueSend(sendingQueue, &temperature_measurement, portMAX_DELAY);
             Serial.println("Temperature measurement queued.");
 
+            int hum_bounds[2] = {0,100};
+            hum_median_60s = ValidateMeasurement(hum_median_60s, hum_bounds);
+            /*
             if(hum_median_60s>100)
             {
                 hum_median_60s=999;
@@ -208,18 +202,21 @@ void measurementTask(void* parameter)
             {
                 hum_median_60s=-999;
             }
+            */
             Measurement humidity_measurement(current_timestamp, hum_median_60s, unit_humidity, type_humidity, dhtPin, deviceMacAddress);
             xQueueSend(sendingQueue, &humidity_measurement, portMAX_DELAY);
             Serial.println("Humidity measurement queued.");
             
-            if(soil_median_60s>100)
+            int soil_bounds[2] = {0,100};
+            soil_median_60s = ValidateMeasurement(soil_median_60s, soil_bounds);
+            /*if(soil_median_60s>100)
             {
                 soil_median_60s=999;
             }
             else if(soil_median_60s<0)
             {
                 soil_median_60s=-999;
-            }
+            }*/
             Measurement soil_measurement(current_timestamp, soil_median_60s, unit_soil, type_soil, soilMoisturePin, deviceMacAddress);
             xQueueSend(sendingQueue, &soil_measurement, portMAX_DELAY);
 
@@ -247,4 +244,43 @@ void measurementTask(void* parameter)
 
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
+}
+/*
+void CollectSamples(float* samples, int size)
+{
+    int delay_in_seconds = (1000-20)*1000/100;
+    for (int i = 0; i < size; i++)
+    {
+        int soil_analog = analogRead(soilMoisturePin);
+
+        samples[i] = soil_analog;
+        delayMicroseconds(delay_in_seconds);
+    }
 };
+
+void CheckForRestart()
+{
+    if (millis() > REBOOT_INTERVAL)
+    {
+        delay(1000);
+        ESP.restart();
+    }
+}
+
+float ValidateMeasurement(float measurement, int bounds[])
+{
+    float measurement_validated; 
+    if(measurement>bounds[1])
+    {
+        measurement_validated =999;
+    }
+    else if(measurement<bounds[0])
+    {
+        measurement_validated =-999;
+    }
+    else
+    {
+        measurement_validated= measurement;
+    }
+    return measurement_validated;
+}*/

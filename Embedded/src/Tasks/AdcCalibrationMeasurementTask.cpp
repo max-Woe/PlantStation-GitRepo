@@ -1,30 +1,19 @@
-#include <Tasks/soilMoistureMeasurementTask.h>
+#include <Tasks/AdcCalibrationMeasurementTask.h>
 #include <Models/measurement.h>
 #include <Services/math.h>
-#include "soilMoistureMeasurementTask.h"
+#include "AdcCalibrationMeasurementTask.h"
 #include <HelperServices/measurementHelper.h>
 
 
 const int ADC_PIN = 32;
 
-//Grenzwerte als Rohwerte aus der Kalibrierung
-const int ADC_WET = 400; 
-const int ADC_DRY = 2500;
-
-const int ADC_DELTA = ADC_DRY-ADC_WET;
-const int ADC_PUFFER = ADC_DELTA*0.1;
-
-//Maximalwerte mit einem 10% Sicherheitspuffer.
-const int ADC_WET_PUFFERED = ADC_WET-ADC_PUFFER; // Nass
-const int ADC_DRY_PUFFERED = ADC_DRY+ADC_PUFFER; // Trocken
-
 //Informationen
-static constexpr const char* TYPE = "soil_moisture";
-static constexpr const char* UNIT = "%";
-extern char deviceMacAddress[18];
+static constexpr const char* TYPE = "calibration";
+static constexpr const char* UNIT = "Digits";
+extern char deviceMacAddress[18];   //Wird benötigt um eine eineindeutige Zuweisung zu einer Station zu ermöglichen
 
 
-void soilMoistureMeasurementTask(void* parameter)
+void AdcCalibrationMeasurementTask(void* parameter)
 {
     const int COUNT_SAMPLES_1s = 100;
     const int COUNT_SAMPLES_60s = 60;
@@ -69,17 +58,10 @@ void soilMoistureMeasurementTask(void* parameter)
             //...den Medianwert der Sekundenmessungen ermitteln,...
             float adc_samples_60s_median = Math::median(adc_samples_60s, COUNT_SAMPLES_60s);
             
-            //...die Minutenmessung mappen...
-            float measurement_value = map(adc_samples_60s_median, ADC_DRY_PUFFERED, ADC_WET_PUFFERED, 0, 100);
-            
-            //...den Messwert validieren,...
-            int validation_bounds[2] = {0, 100};
-            float measurement_value_validated = ValidateMeasurement(measurement_value, validation_bounds);
-        
             //...Erstellung des Measurement-Objektes,...
             Measurement temperature_measurement(
                 current_timestamp, 
-                measurement_value_validated, 
+                adc_samples_60s_median, 
                 UNIT, 
                 TYPE, 
                 ADC_PIN, 
