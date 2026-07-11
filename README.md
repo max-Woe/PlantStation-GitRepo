@@ -19,7 +19,6 @@ flowchart TD
 
     subgraph Frontend["Frontend / Clients"]
         blazor["ChartsJsBlazorApp<br/>(Blazor, Chart.js)<br/>im Live-Betrieb"]
-        webapp["WebApp (Blazor)<br/>Radzen-Dashboard<br/>(lokal lauffähig, nicht deployed)"]
         desktop["Desktop Widget<br/>(Python / PySide6)<br/>im Live-Betrieb"]
         wpf["WPF Client<br/>(C# / ScottPlot)<br/>im Live-Betrieb"]
     end
