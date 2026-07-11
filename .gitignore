@@ -364,3 +364,5 @@ FodyWeavers.xsd
 /deploy_raspberry/
 /WebAPI/deploy_raspberry/
 /WebAPI/deployment/
+/WebAPI/publish-pi/
+.idea/.idea.PlantStationProjektmappe/.idea/
