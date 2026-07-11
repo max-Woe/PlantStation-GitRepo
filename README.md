@@ -2,7 +2,7 @@
 
 PlantStation ist ein Full-Stack-IoT-Projekt zur Überwachung von Pflanzen: ESP32-Sensorstationen messen Temperatur, Luftfeuchtigkeit, Bodenfeuchtigkeit und Wasserstand und senden die Daten an eine zentrale ASP.NET-Core-API, die auf einem Raspberry Pi läuft. Die Messwerte werden persistiert (PostgreSQL) und über mehrere Clients (Web, Desktop) visualisiert.
 
-Das Projekt ist mein persönliches Langzeitprojekt, an dem ich seit [ZEITRAUM EINFÜGEN] arbeite. Der Fokus meiner Arbeit liegt auf dem Backend; Embedded- und Client-Entwicklung vertiefe ich im Rahmen des Projekts kontinuierlich weiter.
+Das Projekt ist mein persönliches Langzeitprojekt, an dem ich seit 2025 arbeite. Der Fokus meiner Arbeit liegt auf dem Backend; Embedded- und Client-Entwicklung vertiefe ich im Rahmen des Projekts kontinuierlich weiter.
 
 ## Architektur
 
@@ -18,19 +18,20 @@ flowchart TD
     end
 
     subgraph Frontend["Frontend / Clients"]
-        webapp["WebApp (Blazor)<br/>ChartsJsBlazor<br/>Radzen-Dashboard<br/>(Blazor, JS-Lernprojekt)"]
+        blazor["ChartsJsBlazorApp<br/>(Blazor, Chart.js)<br/>im Live-Betrieb"]
+        webapp["WebApp (Blazor)<br/>Radzen-Dashboard<br/>(lokal lauffähig, nicht deployed)"]
         desktop["Desktop Widget<br/>(Python / PySide6)<br/>im Live-Betrieb"]
         wpf["WPF Client<br/>(C# / ScottPlot)<br/>im Live-Betrieb"]
     end
 
     esp32 -->|"POST /measurements"| api
     api <-->|"EF Core / Npgsql"| db
-    api -->|"liefert Daten (Anfrage: GET von WebApp)"| webapp
+    api -->|"liefert Daten (Anfrage: GET von ChartsJsBlazorApp)"| blazor
     api -->|"liefert Daten (Anfrage: GET von WPF)"| wpf
     db -->|"liefert Daten (Anfrage: SELECT von Desktop Widget)"| desktop
 ```
 
-Alle drei Clients (WebApp, Desktop Widget, WPF Client) sind aktiv im Einsatz und decken jeweils eine eigene Plattform ab: WebApp für den Browser, Desktop Widget für Linux, WPF Client für Windows.
+Drei Clients (ChartsJsBlazorApp, Desktop Widget, WPF Client) sind aktiv im Einsatz und decken jeweils eine eigene Plattform ab: ChartsJsBlazorApp für den Browser, Desktop Widget für Linux, WPF Client für Windows. `WebApp` (Radzen-Dashboard) ist lokal lauffähig, wird aber aktuell nicht auf dem Raspberry Pi deployt.
 
 ## Tech Stack
 
@@ -52,8 +53,8 @@ Alle drei Clients (WebApp, Desktop Widget, WPF Client) sind aktiv im Einsatz und
 | `LoggingService` | Kapselung von Serilog hinter einem Interface (`ILoggingService`) für austauschbares Logging. |
 | `ConverterService` | Konvertierung zwischen Entities und DTOs. |
 | `PlantStationHelperService` | Kleine fachliche Hilfsfunktionen (u. a. Median-/Mittelwertberechnung). |
-| `WebApp` | Blazor-Dashboard (Server + WASM Hybrid, Radzen) – das aktiv genutzte Web-Frontend zur Anzeige der Messwerte. |
-| `ChartsJsBlazorApp` | Zweites Blazor-Frontend mit Chart.js – entstanden, um mich in JavaScript/Chart.js einzuarbeiten; aktuell kein produktiver Client, sondern Spielwiese für eine mögliche zukünftige Variante. |
+| `WebApp` | Blazor-Dashboard (Server + WASM Hybrid, Radzen) – lokal lauffähig, aktuell nicht auf dem Pi deployt (kein Eintrag in `deploy.sh`, keine passende Backend-URL-Konfiguration hinterlegt). |
+| `ChartsJsBlazorApp` | Blazor-Frontend mit Chart.js – das tatsächlich produktiv über `deploy.sh`/systemd (`blazor-app.service`) deployte Web-Frontend, erreichbar unter der eigenen Domain. |
 | `PlantStationDesktopWidget` | Python/PySide6-Desktop-App, greift direkt per SQLAlchemy auf die Datenbank zu und stellt Messwerte je Station/Sensor mit matplotlib dar. Aktiv im Einsatz. |
 | `WPFClient` | Desktop-Client für Windows (WPF, ScottPlot) – aktiv im Einsatz, neben WebApp (Browser) und Desktop Widget (Linux) einer von drei gleichwertigen Clients. |
 | `Embedded` | Firmware für die ESP32-Sensorstationen (PlatformIO): Sensor-Auslesung, Kalibrierung, Versand der Messwerte an die API. |
@@ -61,8 +62,8 @@ Alle drei Clients (WebApp, Desktop Widget, WPF Client) sind aktiv im Einsatz und
 
 ## Screenshots
 
-**WebApp – Live-Dashboard (Blazor/Radzen)**
-Auswahl von Station, Sensor und Zeitspanne, Anzeige des Temperaturverlaufs.
+**WebApp – Dashboard (Blazor/Radzen)**
+Auswahl von Station, Sensor und Zeitspanne, Anzeige des Temperaturverlaufs. Lokal lauffähig, aktuell nicht auf dem Pi deployt.
 
 ![WebApp Dashboard](docs/images/webapp-dashboard.png)
 
@@ -81,13 +82,23 @@ Auswahl von Station, Sensor und Zeitspanne, Anzeige des Temperaturverlaufs.
 
 ## Setup / Lokales Ausführen
 
-> [HIER ergänzen: kurze Schritt-für-Schritt-Anleitung, z. B.]
-1. PostgreSQL-Datenbank anlegen und Connection String in `WebAPI/appsettings.json` eintragen.
-2. `WebAPI` starten: `dotnet run --project WebAPI`.
-3. `WebApp` starten: `dotnet run --project WebApp` (API-URL ggf. in `appsettings.json` anpassen).
-4. Für die Embedded-Firmware: `Embedded/src/secrets.h.example` nach `secrets.h` kopieren und WLAN-/API-Zugangsdaten eintragen, dann per PlatformIO auf den ESP32 flashen.
+1. PostgreSQL-Datenbank anlegen.
+2. Connection String hinterlegen – **nicht** in `appsettings.json` committen, sondern per [.NET User Secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets) setzen:
+   ```bash
+   cd WebAPI
+   dotnet user-secrets set "ConnectionString:MyDb" "Host=localhost;Database=plantstation;Username=...;Password=..."
+   ```
+   (Achtung: Der Schlüssel heißt `ConnectionString`, ohne "s" am Ende – muss exakt so lauten, wie er im Code über `builder.Configuration["ConnectionString:MyDb"]` gelesen wird.)
+3. Datenbankschema anlegen: `dotnet ef database update --project DataAccess --startup-project WebAPI`
+4. `WebAPI` starten: `dotnet run --project WebAPI` (läuft standardmäßig auf `http://localhost:5000`).
+5. `ChartsJsBlazorApp` starten: `dotnet run --project ChartsJsBlazorApp`. Die Backend-URL wird über den Konfigurationswert `BackendUrl` gesetzt (Standard in `appsettings.json`: interne Netzwerk-IP des Raspberry Pi – für lokale Entwicklung auf `http://localhost:5000/` anpassen).
+6. Für die Embedded-Firmware: `Embedded/src/secrets.h.example` nach `secrets.h` kopieren und WLAN-/API-Zugangsdaten eintragen, dann per PlatformIO auf den ESP32 flashen.
+
+> Hinweis: `WebApp` (Radzen-Dashboard) ist ebenfalls per `dotnet run --project WebApp` startbar, hat aber aktuell keine funktionierende Backend-URL-Konfiguration hinterlegt und müsste dafür zunächst entsprechend ergänzt werden.
 
 ## Ausblick
 
+- Umstellung der Kommunikation zwischen ESP32-Stationen und Backend von HTTP/REST auf MQTT
+- Steuerung der Bewässerung (nicht nur Messung, sondern aktives Gießen)
+- Messung und Steuerung von Nährstoffwerten (Düngen)
 - Vereinheitlichung der Frontends (Chart.js-Ansatz aus `ChartsJsBlazorApp` evtl. in `WebApp` integrieren)
-- [WEITERE IDEEN, die du hast, hier ergänzen]
