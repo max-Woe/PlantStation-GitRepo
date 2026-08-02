@@ -86,15 +86,15 @@ void setup()
             1
         );
 
-        xTaskCreatePinnedToCore(
-            soilMoistureMeasurementTask,
-            "Soil Moisture Measurement Task",
-            4096,
-            NULL,
-            1,
-            NULL,
-            1
-        );
+        // xTaskCreatePinnedToCore(
+        //     soilMoistureMeasurementTask,
+        //     "Soil Moisture Measurement Task",
+        //     4096,
+        //     NULL,
+        //     1,
+        //     NULL,
+        //     1
+        // );
 
         xTaskCreatePinnedToCore(
             sendingTask, 

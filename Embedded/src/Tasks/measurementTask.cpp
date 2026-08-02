@@ -87,7 +87,12 @@ void measurementTask(void* parameter)
         
         #ifdef DEBUGMODE_MEAS
         {
+            Serial.print("Bodenfeuchtigkeit: ");
             Serial.println(soil_median_1s);
+            Serial.print("Temperatur: ");
+            Serial.println(temp);
+            Serial.print("Luftfeuchtigkeit: ");
+            Serial.println(hum);
             // Serial.print("Soil (Pin " + String(soilMoisturePin) + "): ");
             // Serial.print("Soil (Pin ");
             // Serial.print(soil);
