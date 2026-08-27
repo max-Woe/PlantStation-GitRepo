@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-using PlantStationHelperService;
+using Extensions;
 
 namespace DataAccess.Models
 {
