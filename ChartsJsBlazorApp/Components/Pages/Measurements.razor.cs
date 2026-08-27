@@ -17,13 +17,13 @@ using Microsoft.AspNetCore.Components;
 
 public enum TimeSpans
 {
-    hour = 60,
-    threeHours = 180,
-    halfDay = 720,
-    day = 1440,
-    week = 10080,
-    month = 44640,
-    year = 525600
+    Hour = 60,
+    ThreeHours = 180,
+    HalfDay = 720,
+    Day = 1440,
+    Week = 10080,
+    Month = 44640,
+    Year = 525600
 }
 
 // Stellen Sie sicher, dass dies derselbe Namespace ist, den das Projekt verwendet, 
@@ -50,12 +50,12 @@ namespace ChartsJsBlazorApp.Components.Pages
                 }
             }
         }
-        protected List<int> _stationIds = new List<int>();
-        private List<string> _stationNames = new List<string>();
+        protected List<int> StationIds = new List<int>();
+        private List<string> StationNames = new List<string>();
         
-        protected List<int> _sensorIds = new List<int>();
-        protected List<string> _sensorTypes = new List<string>();
-        protected List<TimeSpans> _timeSpans = Enum.GetValues(typeof(TimeSpans)).Cast<TimeSpans>().ToList();
+        private List<int> _sensorIds = new List<int>();
+        private readonly List<string> _sensorTypes = new List<string>();
+        protected readonly List<TimeSpans> TimeSpans = Enum.GetValues(typeof(TimeSpans)).Cast<TimeSpans>().ToList();
 
         private bool _isStationSelected = false; 
         public bool IsStationSelected
@@ -92,25 +92,25 @@ namespace ChartsJsBlazorApp.Components.Pages
         }
         
         private bool _isTimeSpanSelected = false;
-        public bool _isPlotReady = false;
+        protected bool IsPlotReady = false;
         
         public bool IsSensorsComboboxDisabled { get; set; } = true;
         public bool IsTimeSpansComboboxDisabled { get; set; } = true;
 
-        protected List<Measurement> _measurements = new List<Measurement>();
-        protected List<double> _values = new List<double>();
-        protected List<DateTime> _times = new List<DateTime>();
-        protected string PlotColor = ColorUtil.ColorHexString(255, 255, 255);
+        private List<Measurement> _measurements = new List<Measurement>();
+        private readonly List<double> _values = new List<double>();
+        protected List<DateTime> Times = new List<DateTime>();
+        private string _plotColor = ColorUtil.ColorHexString(255, 255, 255);
 
         // Annahme, dass ApiClient und LineConfig in dieser Klasse bekannt sind
-        protected ApiClient _apiClient;
-        protected LineConfig _config = new LineConfig();
+        private ApiClient _apiClient;
+        protected LineConfig Config = new LineConfig();
 
         // public int _selectedStationId = 0;
 
-        public int SelectedStationId { get; set; } = 0;
-        public int SelectedSensorId { get; set; } = 0;
-        public int SelectedTimeSpan { get; set; } = 0;
+        private int SelectedStationId { get; set; } = 0;
+        private int SelectedSensorId { get; set; } = 0;
+        private int SelectedTimeSpan { get; set; } = 0;
 
         // Die Konfiguration wird einmal initialisiert
         protected override async Task OnInitializedAsync()
@@ -125,13 +125,13 @@ namespace ChartsJsBlazorApp.Components.Pages
         {
             try
             {
-                if (_stationIds.Count > 0) _stationIds.Clear();
-                if (_stationNames.Count > 0) _stationNames.Clear();
+                if (StationIds.Count > 0) StationIds.Clear();
+                if (StationNames.Count > 0) StationNames.Clear();
                 
                 _avalibaleStations = await _apiClient.GetAllStationsFromApiAsync<Station>();
                 foreach (Station station in _avalibaleStations)
                 {
-                    _stationIds.Add(station.Id);
+                    StationIds.Add(station.Id);
                 } 
             }
             catch (Exception e)
@@ -144,7 +144,7 @@ namespace ChartsJsBlazorApp.Components.Pages
         {
             double minVal;
             double maxVal;
-
+            
             if (_values.Any())
             {
                 double actualMin = _values.Min();
@@ -199,6 +199,8 @@ namespace ChartsJsBlazorApp.Components.Pages
         {
             ResetPlotAndPlotData();
 
+            since = since.ToUniversalTime();
+
             string? responseString = await _apiClient.GetMeasurementsFromApiAsyncAsString(
                 "GetLastOfSensorSince",
                 sensorId,
@@ -211,23 +213,34 @@ namespace ChartsJsBlazorApp.Components.Pages
                 // die direkt await-fähig ist (z.B. await EntityConverter.ConvertAsync(...)). 
                 // Hier wurde es für die Kompatibilität mit dem Originalcode beibehalten.
                 _measurements = EntityConverter.ConvertStringToListOfEntities<Measurement>(responseString).Result;
+                _measurements = _measurements.DistinctBy(m => m.RecordedAt).ToList();
+                _measurements = _measurements.OrderByDescending(m => m.RecordedAt).ToList();
+                if (_measurements[0].Type == "temperature")
+                {
+                    _measurements.RemoveAll(m => (m.Value < -30 | m.Value > 70));
+                }
+                else if (_measurements[0].Type == "humidity" | _measurements[0].Type == "soil_moisture")
+                {
+                    _measurements.RemoveAll(m => (m.Value < 0 | m.Value > 100));
+                }
+
                 _measurements.Reverse();
 
                 switch (_measurements[0].Type)
                 {
                     case "soil_moisture":
                     {
-                        PlotColor = ColorUtil.ColorHexString(204, 51, 0); // braun
+                        _plotColor = ColorUtil.ColorHexString(204, 51, 0); // braun
                         break;
                     }
                     case "humidity":
                     {
-                        PlotColor = ColorUtil.ColorHexString(0, 102, 255); // blau
+                        _plotColor = ColorUtil.ColorHexString(0, 102, 255); // blau
                         break;
                     }
                     case "temperature":
                     {
-                        PlotColor = ColorUtil.ColorHexString(255, 0, 0); // rot
+                        _plotColor = ColorUtil.ColorHexString(255, 0, 0); // rot
                         break;
                     }
                 }
@@ -243,12 +256,12 @@ namespace ChartsJsBlazorApp.Components.Pages
         {
             _measurements.Clear();
             _values.Clear();
-            _config = new LineConfig();
+            Config = new LineConfig();
         }
 
-        protected void InitializeConfig(double min, double max)
+        private void InitializeConfig(double min, double max)
         {
-            _config = new LineConfig
+            Config = new LineConfig
             {
                 Options = new LineOptions
                 {
@@ -277,27 +290,27 @@ namespace ChartsJsBlazorApp.Components.Pages
 
             foreach (Measurement measurement in _measurements)
             {
-                _config.Data.Labels.Add(measurement.RecordedAt.ToString("yy.MM.dd HH:mm:ss"));
+                Config.Data.Labels.Add(measurement.RecordedAt.ToLocalTime().ToString("yy.MM.dd HH:mm:ss"));
             }
 
             LineDataset<double> dataset = new LineDataset<double>(_values)
             {
                 Label = $"{_measurements[0].Type} [{_measurements[0].Unit}]",
-                BackgroundColor = PlotColor,
-                BorderColor = PlotColor,
+                BackgroundColor = _plotColor,
+                BorderColor = _plotColor,
                 Fill = false,
                 PointRadius = 0,
-                PointBackgroundColor = PlotColor
+                PointBackgroundColor = _plotColor
             };
 
-            _config.Data.Datasets.Add(dataset);
+            Config.Data.Datasets.Add(dataset);
         }
         
         private async Task PlotIfReady()
         {
             if (IsStationSelected && _isSensorSelected && _isTimeSpanSelected)
             {
-                _isPlotReady = true;
+                IsPlotReady = true;
                 DateTime localTime =  TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time"));
                 await SetMeasurementsForPlot(SelectedSensorId, localTime.AddMinutes(-SelectedTimeSpan));//AddMinutes(-60));//.
                 await LoadPlot();

@@ -15,7 +15,7 @@
             <select @onchange="HandleStationSelection">
                 <option value="0">Bitte Station-ID wählen</option>
 
-                @foreach (var id in _stationIds) // Iterieren Sie über die Quell-Liste
+                @foreach (var id in StationIds) // Iterieren Sie über die Quell-Liste
                 {
                     <option value="@id">@id</option>
                 }
@@ -38,7 +38,7 @@
             <select @onchange="HandleTimeSpanSelection" disabled="@IsTimeSpansComboboxDisabled">
                 <option value="0">Bitte Zeitraum wählen</option>
 
-                @foreach (var timeSpan in _timeSpans) // Iterieren Sie über die Quell-Liste
+                @foreach (var timeSpan in TimeSpans) // Iterieren Sie über die Quell-Liste
                 {
                     <option value="@timeSpan">@timeSpan</option>
                 }
@@ -47,13 +47,13 @@
     </div>
     <div class="plot">
         @* --- Nur das Diagramm-Rendering --- *@
-        @if (_config != null && _config.Data.Datasets.Any())
+        @if (Config != null && Config.Data.Datasets.Any())
         {
             <div class="chart-container-fluid">
-                <Chart Config="_config" @key="_config" ></Chart>
+                <Chart Config="Config" @key="Config" ></Chart>
             </div>
         }
-        else if (_isPlotReady)
+        else if (IsPlotReady)
         {
             <div class="alert alert-info">Bitte eine Station und einen Sensor auswählen!</div>
         }
