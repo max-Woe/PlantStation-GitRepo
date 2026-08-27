@@ -17,14 +17,22 @@ class MainWindowViewModel(QObject):
         self._station_sensor_pairs = []
         self._status = "Initializing"
 
+        self._theme = "light"
+
         self.load_stations_as_list()
         self.load_stations_and_sensors_as_list_of_tuples()
         print()
 
-    def getStatus(self):
+    def get_theme(self):
+        return self._theme
+
+    def set_theme(self, theme):
+        self._theme = theme
+
+    def get_status(self):
         return self._status
 
-    def setStatus(self, value):
+    def set_status(self, value):
         if value != self._status:
             self._status = value
             self.statusChanged.emit(value)

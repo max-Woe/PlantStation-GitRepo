@@ -9,21 +9,27 @@ from matplotlib.figure import Figure
 from pathlib import Path
 from numpy.ma.core import ceil, floor
 from pandas import DataFrame
+from Widgets.PlotWidgets.PlotWidgetBase import PlotWidgetBase
+
 
 def resource_path(relative_path: str) -> Path:
     """Gibt den korrekten Pfad zurück – im Dev-Modus und im PyInstaller-Bundle."""
-    if hasattr(sys, '_MEIPASS'):
+    if hasattr(sys, '_MEINPASS'):
         # PyInstaller entpackt Dateien nach _MEIPASS
-        return Path(sys._MEIPASS) / relative_path
+        return Path(sys._MEINPASS) / relative_path
     return Path(__file__).resolve().parent.parent.parent / relative_path
 
-class PlotWidget(QWidget):
+class SinglePlotWidget(PlotWidgetBase):
     def __init__(self, parent_view_model):
-        super().__init__()
+        super().__init__(parent_view_model)
+
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+
+        self.current_theme = 'light'
 
         # Grid-Layout erlaubt das Stapeln von Widgets in derselben Zelle
-        self.main_layout = QGridLayout(self)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        # self.main_layout = QGridLayout(self)
+        # self.main_layout.setContentsMargins(0, 0, 0, 0)
 
         # 1. Matplotlib Setup
         self.fig = Figure(figsize=(5, 2), dpi=100)
@@ -40,7 +46,8 @@ class PlotWidget(QWidget):
         self.current_cursor = None
 
         self.background_image = QWidget()
-        self.background_image.setStyleSheet("background-color: rgb(255, 255, 255); ")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        # self.background_image.setStyleSheet("background-color: rgb(0, 0, 0); ")
 
         self.background_layout = QVBoxLayout(self.background_image)
 
@@ -106,8 +113,8 @@ class PlotWidget(QWidget):
         if self.current_cursor is not None:
             self.current_cursor.remove()
 
-        y_max = ceil(measurements_df["Value"].max() / 10) * 10
-        y_min = floor(measurements_df["Value"].min() / 10) * 10
+        y_max = ceil(float(measurements_df["Value"].max()) / 10) * 10
+        y_min = floor(float(measurements_df["Value"].min()) / 10) * 10
 
         color_line = 'black'
         match measurements_df["Type"].iloc[0]:
@@ -127,10 +134,11 @@ class PlotWidget(QWidget):
         line = self.ax.plot(measurements_df['RecordedAt'], measurements_df["Value"],
                             color=color_line, label='Rohdaten', zorder=2)
 
+        x_limits = measurements_df['RecordedAt'].min(),measurements_df['RecordedAt'].max()
         # Achsen-Konfiguration
         self.ax.set_title(measurements_df["Type"].iloc[0].capitalize())
         self.ax.set_ylim(y_min, y_max)
-        self.ax.set_xlim(measurements_df['RecordedAt'].min(), measurements_df['RecordedAt'].max())
+        self.ax.set_xlim(x_limits)
         self.ax.set_xlabel('Zeit')
         self.ax.set_ylabel(f"{measurements_df['Type'].iloc[0].capitalize()} [{measurements_df['Unit'].iloc[0]}]")
         self.ax.grid(True, zorder=0)
@@ -148,6 +156,8 @@ class PlotWidget(QWidget):
         self.fig.autofmt_xdate()
         self.canvas.draw()
 
+        self.change_theme(self.current_theme)
+
     def change_logo_color(self, color:str):
         if (color == "green"):
             self.logo_pixmap = QPixmap(str(self.logo_path_green))
@@ -155,3 +165,20 @@ class PlotWidget(QWidget):
             self.logo_pixmap = QPixmap(str(self.logo_path_yellow))
         elif(color == "red"):
             self.logo_pixmap = QPixmap(str(self.logo_path_red))
+
+
+    def change_theme(self, theme:str):
+        color = "black"
+
+        if theme == "dark":
+            color = 'white'
+
+        for spine in self.ax.spines.values():
+            spine.set_color(color)
+
+        self.ax.tick_params(color=color, labelcolor=color, which='both')
+        self.ax.xaxis.label.set_color(color)
+        self.ax.yaxis.label.set_color(color)
+        self.ax.title.set_color(color)
+
+        self.canvas.draw()

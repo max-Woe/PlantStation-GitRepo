@@ -1,4 +1,4 @@
 from .TimePickerWidget import TimePickerWidget
-from .PlotWidget import PlotWidget
-from .InfoWidget import InfoWidget
+from .PlotWidgets import PlotWidgetBase
+from .InfoWidgets import InfoWidgetBase
 from .RefreshWidget import RefreshWidget

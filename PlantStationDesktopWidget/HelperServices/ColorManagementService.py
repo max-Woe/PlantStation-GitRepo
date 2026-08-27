@@ -15,6 +15,8 @@ class ColorManagementService:
             self.current_limits = self.humidity_limits
         elif type == "soil_moisture":
             self.current_limits = self.soil_moisture_limits
+        elif type == "vpd":
+            self.current_limits = (0.4, 0.8, 1.2, 1.6)
 
     def get_logo_color(self, value):
         lower_yellow, lower_green, upper_green, upper_yellow = self.current_limits

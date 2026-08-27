@@ -1,7 +1,9 @@
 from datetime import datetime, timezone, timedelta
 from typing import List
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QButtonGroup, QRadioButton
+
+from PySide6.QtCore import Signal, Qt, QDateTime
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QButtonGroup, QRadioButton, QLabel, QDateTimeEdit
+
 
 class TimePickerWidget(QWidget):
 
@@ -9,6 +11,8 @@ class TimePickerWidget(QWidget):
 
     def __init__(self, radio_button_times: List[tuple[str,int]], default_index=1):# parent_view_model):
         super().__init__()
+
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.radio_button_times = radio_button_times
 
@@ -23,7 +27,23 @@ class TimePickerWidget(QWidget):
             if i == default_index:
                 radio_button.setChecked(True)
         radio_button_own_timespan = QRadioButton('Eigener Zeitraum')
-        layout.addWidget(radio_button_own_timespan)
+
+        timespan_begin_label = QLabel('Beginn:')
+        timespan_begin_textfield = QDateTimeEdit(self)
+        timespan_begin_textfield.setDateTime(QDateTime.currentDateTimeUtc())
+        timespan_end_label = QLabel('Ende:')
+        timespan_end_textfield = QDateTimeEdit(self)
+        timespan_end_textfield.setDateTime(QDateTime.currentDateTimeUtc())
+
+        timespan_layout = QHBoxLayout()
+        timespan_layout.addWidget(radio_button_own_timespan)
+        timespan_layout.addWidget(timespan_begin_label)
+        timespan_layout.addWidget(timespan_begin_textfield)
+        timespan_layout.addWidget(timespan_end_label)
+        timespan_layout.addWidget(timespan_end_textfield)
+
+
+        layout.addLayout(timespan_layout)
         self.button_group.addButton(radio_button_own_timespan, len(radio_button_times))
 
         self.button_group.idClicked.connect(self.handle_clicked)

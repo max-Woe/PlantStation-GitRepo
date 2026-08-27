@@ -39,12 +39,41 @@ class MeasurementValidationService:
         else:
             return ValidationStatus.VALIDATION_ERROR
 
+    def validate_vpd_dataframe(self, df_original: pd.DataFrame) -> ValidationStatus:
+
+        if df_original.empty:
+            return ValidationStatus.EMPTY
+
+        df = df_original.copy()
+
+        df_cleared = self.clear_vpd_by_limits(df)
+
+        if df_cleared.empty:
+            return ValidationStatus.INVALID
+        elif len(df_cleared) < len(df_original):
+            return ValidationStatus.PARTIAL_VALID
+        elif len(df_cleared) == len(df_original):
+            return ValidationStatus.ALL_VALID
+        else:
+            return ValidationStatus.VALIDATION_ERROR
+
     def clear_by_limits(self, df_original: pd.DataFrame) -> pd.DataFrame:
         temperature_mask = (df_original['Type'] == 'temperature') & df_original['Value'].between(*self.temp_range)
         humidity_mask = (df_original['Type'] == 'humidity') & df_original['Value'].between(*self.hum_range)
         soil_moisture_mask = (df_original['Type'] == 'soil_moisture') & df_original['Value'].between(*self.soil_moisture_range)
 
         df_cleared = df_original[temperature_mask | humidity_mask | soil_moisture_mask].reset_index(drop=True)
+
+        return df_cleared
+
+
+    def clear_vpd_by_limits(self, df_original: pd.DataFrame) -> pd.DataFrame:
+        df_cleared = pd.DataFrame()
+        if len(df_original)>0:
+            temperature_mask = df_original['temperature'].between(*self.temp_range)
+            humidity_mask = df_original['humidity'].between(*self.hum_range)
+
+            df_cleared = df_original[temperature_mask & humidity_mask].reset_index(drop=True)
 
         return df_cleared
 
