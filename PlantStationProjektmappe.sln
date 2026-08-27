@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConverterService", "Convert
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChartsJsBlazorApp", "ChartsJsBlazorApp\ChartsJsBlazorApp.csproj", "{C7870B6B-EAF4-4E0A-9E89-B0580B4AAB5F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions", "Extensions\Extensions.csproj", "{E181BA1D-550A-4C08-BAFC-33A1C8057154}"
+EndProject
 
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,6 +69,10 @@ Global
 		{C7870B6B-EAF4-4E0A-9E89-B0580B4AAB5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7870B6B-EAF4-4E0A-9E89-B0580B4AAB5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7870B6B-EAF4-4E0A-9E89-B0580B4AAB5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E181BA1D-550A-4C08-BAFC-33A1C8057154}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E181BA1D-550A-4C08-BAFC-33A1C8057154}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E181BA1D-550A-4C08-BAFC-33A1C8057154}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E181BA1D-550A-4C08-BAFC-33A1C8057154}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
