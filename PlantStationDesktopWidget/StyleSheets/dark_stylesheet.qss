@@ -1,0 +1,73 @@
+#OuterTabsContainer{
+    background-color: #323232;
+}
+
+
+#OuterTabsContainer QTabBar::tab:selected,
+#InnerTabsContainer QTabBar::tab:selected{
+    background-color: green;
+    color: white;
+}
+
+#OuterTabsContainer QTabBar::tab:!selected,
+#InnerTabsContainer QTabBar::tab:!selected{
+    background-color: #303030;
+    color: white;
+}
+
+#OuterTabsContainer::pane,
+#InnerTabsContainer::pane{
+    border: 1px solid black;
+}
+
+MeasurementsWidgetBase, TimePickerWidget, InfoWidgetBase,
+InfoWidgetBase QLabel{
+    background-color: #545454;
+    color: #323232;
+}
+
+TimePickerWidget QRadioButton{
+    color: white;
+}
+
+TimePickerWidget QRadioButton::indicator{
+    border: 2px solid white;
+    border-radius: 5px;
+    width: 6px;
+    height: 6px;
+}
+
+TimePickerWidget QRadioButton::indicator:unchecked{
+    background-color: white
+}
+
+TimePickerWidget QRadioButton::indicator:checked{
+    background-color: dimgrey
+}
+
+TimePickerWidget QDateTimeEdit::up-button, QDateTimeEdit::down-button{
+    width: 0;
+}
+
+TimePickerWidget QDateTimeEdit{
+    background-color: grey;
+}
+
+PlotWidgetBase{
+    background-color: #323232;
+}
+
+InfoWidgetBase QLabel{
+    color: white;
+}
+
+InfoWidgetBase #plot_error_label{
+    color: red;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+QPushButton{
+    background-color: lightgrey;
+    color: black;
+}
