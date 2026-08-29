@@ -732,7 +732,7 @@ namespace DataAccess.Repositories
             var measurement = new Measurement
             {
                 Value = dto.Value,
-                Unit = dto.Unit.Replace("?", ""),
+                Unit = dto.Unit,
                 Type = dto.Type,
                 RecordedAt = DateTimeOffset.FromUnixTimeSeconds(dto.UnixTime).UtcDateTime
             };
