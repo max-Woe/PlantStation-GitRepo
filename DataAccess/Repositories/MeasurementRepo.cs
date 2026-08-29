@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using DataAccess.DTOs;
 using Microsoft.EntityFrameworkCore;
 using DataAccess.Models;
 using DataAccess.Interfaces;
@@ -593,7 +594,7 @@ namespace DataAccess.Repositories
             }
         }
         /// <inheritdoc/>
-        public async Task<List<Measurement>> DeleteMeasurmentsBySensorId(int sensorId)
+        public async Task<List<Measurement>> DeleteMeasurementsBySensorId(int sensorId)
         {
             _logger.StartTimer();
             List<Measurement>? measurementsFromDb = new List<Measurement>();
@@ -708,6 +709,37 @@ namespace DataAccess.Repositories
             await stationRepo.Update(station);
             
             return sensor;
+        }
+        
+        public async Task<Measurement?> CreateFromEsp(MeasurementDto dto)
+        {
+            if (dto.MacAddress == null || 
+                dto.Type == null || 
+                dto.Unit == null || 
+                string.IsNullOrWhiteSpace(dto.MacAddress))
+            {
+                return null;
+            }
+
+            // 1. Erstelle das Measurement-Objekt direkt aus dem DTO
+            var measurement = new Measurement
+            {
+                Value = dto.Value,
+                Unit = dto.Unit,
+                Type = dto.Type,
+                RecordedAt = DateTimeOffset.FromUnixTimeSeconds(dto.UnixTime).UtcDateTime
+            };
+
+            // 2. Rufe DEINE bestehende EnsureSensorExisting-Methode auf
+            // (Diese verknüpft die Station/den Sensor und setzt die SensorId im measurement)
+            var sensor = await EnsureSensorExisting(measurement, dto.MacAddress);
+            if (sensor == null)
+            {
+                return null;
+            }
+
+            // 3. Speichere das fertig aufbereitete Measurement
+            return await Create(measurement);
         }
         
         private bool MeasurementValueIsValid(Measurement measurement)

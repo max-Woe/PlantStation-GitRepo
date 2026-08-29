@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DataAccess.DTOs;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace PlantStationAPI.Backend.Controllers
 {
@@ -64,7 +66,7 @@ namespace PlantStationAPI.Backend.Controllers
         /// <list type="bullet">
         /// <item><description><see cref="ControllerBase.Ok(object)"/> (200) with the <see cref="Measurement"/> object if found.</description></item>
         /// <item><description><see cref="ControllerBase.BadRequest(object)"/> (400) if the ID is not greater than zero.</description></item>
-        /// <item><description><see cref="ControllerBase.NotFound"/> (404) if no measurement with the given ID exists.</description></item>
+        /// <item><description><see cref="NotFound"/> (404) if no measurement with the given ID exists.</description></item>
         /// </list>
         /// </returns>
         [HttpGet]
@@ -94,7 +96,7 @@ namespace PlantStationAPI.Backend.Controllers
         /// An <see cref="IActionResult"/>:
         /// <list type="bullet">
         /// <item><description><see cref="ControllerBase.Ok(object)"/> (200) with the list of <see cref="Measurement"/> objects.</description></item>
-        /// <item><description><see cref="ControllerBase.NotFound"/> (404) if no measurements are found for the given sensor ID.</description></item>
+        /// <item><description><see cref="NotFound"/> (404) if no measurements are found for the given sensor ID.</description></item>
         /// </list>
         /// </returns>
         [HttpGet]
@@ -120,7 +122,7 @@ namespace PlantStationAPI.Backend.Controllers
         /// <list type="bullet">
         /// <item><description><see cref="ControllerBase.Ok(object)"/> (200) with the list of <see cref="Measurement"/> objects.</description></item>
         /// <item><description><see cref="ControllerBase.BadRequest(object)"/> (400) if the 'since' parameter is not a valid date.</description></item>
-        /// <item><description><see cref="ControllerBase.NotFound"/> (404) if no measurements are found within the specified time frame.</description></item>
+        /// <item><description><see cref="NotFound"/> (404) if no measurements are found within the specified time frame.</description></item>
         /// </list>
         /// </returns>
         [HttpGet]
@@ -137,6 +139,26 @@ namespace PlantStationAPI.Backend.Controllers
             if (result.IsNullOrEmpty())
             {
                 return NotFound();
+            }
+
+            return Ok(result);
+        }
+        /// <summary>
+        /// Receives a measurement directly from an ESP32 micro-controller and assigns the sensor via MAC and Pin.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> CreateFromEsp(MeasurementDto? dto)
+        {
+            if (dto == null)
+            {
+                return BadRequest("DTO cannot be null!");
+            }
+
+            var result = await _measurementRepo.CreateFromEsp(dto);
+
+            if (result == null)
+            {
+                return BadRequest($"Sensor or station could not be processed for MAC: {dto.MacAddress}");
             }
 
             return Ok(result);

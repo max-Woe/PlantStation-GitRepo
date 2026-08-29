@@ -4,6 +4,7 @@ using LoggingService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
+using DataAccess.DTOs;
 
 namespace DataAccess.Interfaces
 {
@@ -40,8 +41,10 @@ namespace DataAccess.Interfaces
         /// </summary>
         /// <param name="sensorId">The ID of the sensor whose measurements are to be deleted.</param>
         /// <returns>A Task that returns a <see cref="List{T}"/> of the actually deleted <see cref="Measurement"/> objects. Returns an empty list on error or if none were found.</returns>
-        Task<List<Measurement>> DeleteMeasurmentsBySensorId(int sensorId);
+        Task<List<Measurement>> DeleteMeasurementsBySensorId(int sensorId);
 
+        Task<Measurement?> CreateFromEsp(MeasurementDto dto);
+        
         /// <summary>
         /// Ensures that the sensor associated with the measurement exists in the database and links it to a station if necessary.
         /// The sensor is created if it does not exist and a MAC address is provided.
