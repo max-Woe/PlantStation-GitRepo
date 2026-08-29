@@ -688,8 +688,15 @@ namespace DataAccess.Repositories
             {
                 return null;
             }   
-
-            sensor = await sensorRepo.GetById(measurement.SensorId);
+            List<Sensor> sensors = await sensorRepo.GetByStationId(station.Id);
+            foreach (Sensor sensor_entry in sensors)
+            {
+                if (sensor_entry.Unit == measurement.Unit)
+                {
+                    sensor = sensor_entry;
+                }
+            }
+            // sensor = await sensorRepo.GetById(measurement.SensorId);
             if (sensor == null)
             {
                 station.SensorsCount++;
@@ -725,7 +732,7 @@ namespace DataAccess.Repositories
             var measurement = new Measurement
             {
                 Value = dto.Value,
-                Unit = dto.Unit,
+                Unit = dto.Unit.Replace("?", ""),
                 Type = dto.Type,
                 RecordedAt = DateTimeOffset.FromUnixTimeSeconds(dto.UnixTime).UtcDateTime
             };
@@ -737,6 +744,9 @@ namespace DataAccess.Repositories
             {
                 return null;
             }
+            
+            measurement.SensorId = sensor.Id;
+            measurement.SensorIdReference = 99999;
 
             // 3. Speichere das fertig aufbereitete Measurement
             return await Create(measurement);
