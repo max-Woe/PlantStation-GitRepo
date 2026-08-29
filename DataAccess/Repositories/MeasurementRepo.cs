@@ -43,7 +43,7 @@ namespace DataAccess.Repositories
             try
             {
                 await TryExecuteAsync(async () => await _context.Measurements.AddAsync(measurement),"AddAsync", "Create", measurement);
-                await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "Create", measurement);
+                var result = await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChangesAsync", "Create", measurement);
 
                 return measurement;
             }
@@ -737,6 +737,10 @@ namespace DataAccess.Repositories
                 RecordedAt = DateTimeOffset.FromUnixTimeSeconds(dto.UnixTime).UtcDateTime
             };
 
+            // if (measurement.Unit == "%rel")
+            // {
+            //     measurement.Unit = "rel%";
+            // }
             // 2. Rufe DEINE bestehende EnsureSensorExisting-Methode auf
             // (Diese verknüpft die Station/den Sensor und setzt die SensorId im measurement)
             var sensor = await EnsureSensorExisting(measurement, dto.MacAddress);
@@ -749,7 +753,8 @@ namespace DataAccess.Repositories
             measurement.SensorIdReference = 99999;
 
             // 3. Speichere das fertig aufbereitete Measurement
-            return await Create(measurement);
+            Measurement? result = await Create(measurement);
+            return result;
         }
         
         private bool MeasurementValueIsValid(Measurement measurement)
