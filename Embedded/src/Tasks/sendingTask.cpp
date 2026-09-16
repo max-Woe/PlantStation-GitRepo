@@ -1,5 +1,5 @@
 #ifndef DEBUGMODE_SEND
-#define DEBUGMODE_SEND FALSE
+#define DEBUGMODE_SEND TRUE
 #endif
 
 #include <Tasks/sendingTask.h>
@@ -22,7 +22,7 @@ void sendingTask(void* parameter)
     static bool initialized = false;
 
     if (!initialized) {
-        snprintf(serverUrl, sizeof(serverUrl), "http://%s/api/MeasurementCollection/ReceiveMeasurement", SERVERIP);
+        snprintf(serverUrl, sizeof(serverUrl), "http://%s/api/Measurement/CreateFromEsp", SERVERIP);
         initialized = true;
     }
 
@@ -48,7 +48,7 @@ void sendingTask(void* parameter)
                 //int httpResponseCode = http.POST(jsonPayload);
                 int httpResponseCode = http.POST((uint8_t*)jsonBuffer, strlen(jsonBuffer));
 
-                #if DEBUGMODE_SEND
+                #if true
                 {
                     Serial.println("--------------------------------------------------------------");
                     Serial.println("Versuche, gespeicherte Daten zu senden...");
@@ -105,7 +105,7 @@ void sendingTask(void* parameter)
             //int httpResponseCode = http.POST(jsonPayload);
             int httpResponseCode = http.POST((uint8_t*)jsonBuffer, strlen(jsonBuffer));
 
-            #if DEBUGMODE_SEND
+            #if true
             {
                 Serial.println("--------------------------------------------------------------");
                 Serial.println("Versuche, neue Daten zu senden...");
