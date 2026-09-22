@@ -130,7 +130,7 @@ class VpdMeasurementWidget(MeasurementsWidgetBase):
     def change_logo_color(self):
         measurement_df = self._view_model.vpd_df
 
-        if 'Type' in measurement_df.columns:
+        if 'Type' in measurement_df.columns and len(measurement_df)>0:
             type = measurement_df.at[measurement_df.index[0], 'Type']
             value = measurement_df.at[measurement_df.index[0], 'Value']
 

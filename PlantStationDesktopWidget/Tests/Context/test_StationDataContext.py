@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 from unittest.mock import Mock
 from datetime import datetime
-from Context.StationDataContext import StationDataContext
+from DataAcces.Context.StationDataContext import StationDataContext
 from DataAcces.Repositories.MeasurementRepo import MeasurementRepo
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def station_data(measurement_repo):
     ]
 )
 def test_get_all_measurements_from_repo(station_data, expected):
-    result = station_data._set_measurements_df_and_dict_by_type()
+    result = station_data._fetch_and_prepare_data()
 
     assert result.keys() == expected.keys()
 

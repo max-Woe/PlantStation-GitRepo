@@ -2,7 +2,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout
 
 class RefreshWidget(QWidget):
-    button_clicked = Signal()
+    refresh_button_clicked = Signal()
 
     def __init__(self, parent_view_model):
         super().__init__()
@@ -16,4 +16,4 @@ class RefreshWidget(QWidget):
         layout.addWidget(refresh_button)
 
     def refresh_data(self):
-        self.button_clicked.emit()
+        self.refresh_button_clicked.emit()

@@ -13,6 +13,9 @@ class StationRepo:
 
 
     def get_all(self) -> pd.DataFrame:
+        """Fetches all stations.
+
+        :return: pd.DataFrame containing all stations."""
         with self.session_factory() as session:
             try:
                 query = session.query(Station)
@@ -33,6 +36,9 @@ class StationRepo:
 
 
     def get_all_station_ids(self) -> List[int]:
+        """Fetches all station id's.
+
+        :return: list of station id's"""
         with self.session_factory() as session:
             try:
                 stations = session.query(Station).all()

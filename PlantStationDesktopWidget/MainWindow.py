@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QMainWindow, QTabWidget, QLabel
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 
-from Context.StationDataContext import StationDataContext
+from DataAcces.Context.StationDataContext import StationDataContext
 from DataAcces.Repositories.MeasurementRepo import MeasurementRepo
 from HelperServices.MeasurementValidationService import MeasurementValidationService
 from ViewModels.DataBaseDialogViewModel import DataBaseDialogViewModel

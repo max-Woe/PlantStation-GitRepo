@@ -5,7 +5,7 @@ from PySide6.QtCore import QObject, Signal
 from pandas import DataFrame
 from datetime import datetime
 
-from Context.StationDataContext import StationDataContext
+from DataAcces.Context.StationDataContext import StationDataContext
 from DataAcces.Repositories.MeasurementRepo import MeasurementRepo
 from HelperServices.MeasurementValidationService import MeasurementValidationService
 from HelperServices.MeasurementValidationService import ValidationStatus
@@ -32,7 +32,8 @@ class MeasurementViewModelBase(QObject):
                                    ("1 Jahr", 24*365)]
         self.selected_radiobutton_index = 1
 
-        self.since = datetime.now(timezone.utc) - timedelta(hours=self.radiobutton_times[self.selected_radiobutton_index][1])
+        self._since = datetime.now(timezone.utc) - timedelta(hours=self.radiobutton_times[self.selected_radiobutton_index][1])
+        self._until = datetime.now(timezone.utc)
 
         self.validation_status = ValidationStatus.EMPTY
 
@@ -50,6 +51,25 @@ class MeasurementViewModelBase(QObject):
             return self._last_update_time
         else:
             return datetime(1,1,1)
+
+    @property
+    def since(self) -> datetime:
+        return self._since
+    @since.setter
+    def since(self, since: datetime):
+        if since != self.since:
+            self._station_data_context.since = since
+            self._since = since
+
+    @property
+    def until(self) -> datetime:
+        return self._until
+    @until.setter
+    def until(self, until: datetime):
+        if until != self._until:
+            self._station_data_context.until = until
+            self._until = until
+
 
     # The initial loading process of the measurement data as DataFrame.
     def initial_load_measurements(self):

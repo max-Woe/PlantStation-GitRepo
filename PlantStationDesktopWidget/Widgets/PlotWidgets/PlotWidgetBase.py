@@ -61,64 +61,6 @@ class PlotWidgetBase(QWidget):
 
     def plot(self, *args, **kwargs):
         pass
-        # if measurements_df is None or measurements_df.empty:
-        #     self.canvas.hide()
-        #     self.logo_label.hide()
-        #     # Falls ein "No Data" Label existiert, hier anzeigen
-        #     if hasattr(self, "no_data_in_df_label"):
-        #         self.no_data_in_df_label.show()
-        #     return
-        #
-        # self.canvas.show()
-        # self.logo_label.show()
-        #
-        # if self.current_cursor is not None:
-        #     self.current_cursor.remove()
-        #
-        # y_max = ceil(float(measurements_df["Value"].max()) / 10) * 10
-        # y_min = floor(float(measurements_df["Value"].min()) / 10) * 10
-        #
-        # color_line = 'black'
-        # match measurements_df["Type"].iloc[0]:
-        #     case "temperature":
-        #         color_line = 'red'
-        #     case "humidity":
-        #         color_line = 'blue'
-        #     case "soil_moisture":
-        #         color_line = 'brown'
-        #
-        # self.ax.clear()
-        #
-        # # WICHTIG: Nach clear() muss Transparenz erneut gesetzt werden
-        # self.ax.patch.set_alpha(0.0)
-        #
-        # # Plotten der Daten (zorder=2 damit über dem Grid)
-        # line = self.ax.plot(measurements_df['RecordedAt'], measurements_df["Value"],
-        #                     color=color_line, label='Rohdaten', zorder=2)
-        #
-        # x_limits = measurements_df['RecordedAt'].min(),measurements_df['RecordedAt'].max()
-        # # Achsen-Konfiguration
-        # self.ax.set_title(measurements_df["Type"].iloc[0].capitalize())
-        # self.ax.set_ylim(y_min, y_max)
-        # self.ax.set_xlim(x_limits)
-        # self.ax.set_xlabel('Zeit')
-        # self.ax.set_ylabel(f"{measurements_df['Type'].iloc[0].capitalize()} [{measurements_df['Unit'].iloc[0]}]")
-        # self.ax.grid(True, zorder=0)
-        #
-        # # Cursor Setup
-        # self.current_cursor = mplcursors.cursor(line, hover=True, multiple=False)
-        #
-        # @self.current_cursor.connect("add")
-        # def _(sel):
-        #     idx = int(sel.index)
-        #     x_val = measurements_df['RecordedAt'].iloc[idx]
-        #     y_val = sel.target[1]
-        #     sel.annotation.set_text(f"Zeit: {x_val.strftime('%H:%M:%S')}\nWert: {y_val:.2f}")
-        #
-        # self.fig.autofmt_xdate()
-        # self.canvas.draw()
-        #
-        # self.change_theme(self.current_theme)
 
 
     def change_logo_color(self, color:str):

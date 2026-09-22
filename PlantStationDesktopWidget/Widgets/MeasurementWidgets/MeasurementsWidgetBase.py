@@ -30,7 +30,7 @@ class MeasurementsWidgetBase(QWidget):
         self.init_information_labels()
         #---------------------------------------------------REFRESH-BUTTON--------------------------------------------#
         self.refresh_widget = RefreshWidget(self._view_model)
-        self.refresh_widget.button_clicked.connect(self.on_refresh_button_clicked)
+        self.refresh_widget.refresh_button_clicked.connect(self.on_refresh_button_clicked)
         self.layout.addWidget(self.refresh_widget, 0)
 
 
@@ -45,8 +45,9 @@ class MeasurementsWidgetBase(QWidget):
     def init_information_labels(self):
         pass
 
-    def on_time_changed(self, hours):
-        self._view_model.since = hours
+    def on_time_changed(self, since, until):
+        self._view_model.since = since
+        self._view_model.until = until
         self.update_all_displays()
 
     def on_refresh_button_clicked(self):
