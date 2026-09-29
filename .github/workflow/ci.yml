@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # WPFClient (net8.0-windows) wird bewusst ausgelassen, daher kein Build der kompletten .sln.
+      - name: Restore
+        run: |
+          dotnet restore DataAccessUnitTest/DataAccessUnitTest.csproj
+          dotnet restore WebAPI/WebAPI.csproj
+          dotnet restore ChartsJsBlazorApp/ChartsJsBlazorApp.csproj
+          dotnet restore ConverterService/ConverterService.csproj
+          dotnet restore PlantStationHelperService/PlantStationHelperService.csproj
+
+      - name: Build
+        run: |
+          dotnet build DataAccessUnitTest/DataAccessUnitTest.csproj --no-restore -c Release
+          dotnet build WebAPI/WebAPI.csproj --no-restore -c Release
+          dotnet build ChartsJsBlazorApp/ChartsJsBlazorApp.csproj --no-restore -c Release
+          dotnet build ConverterService/ConverterService.csproj --no-restore -c Release
+          dotnet build PlantStationHelperService/PlantStationHelperService.csproj --no-restore -c Release
+
+      - name: Test
+        run: dotnet test DataAccessUnitTest/DataAccessUnitTest.csproj --no-build -c Release --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/test-results.trx"
