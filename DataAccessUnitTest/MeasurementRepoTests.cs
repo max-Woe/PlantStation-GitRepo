@@ -102,7 +102,7 @@ namespace DataAccessUnitTest
             [Fact]
             public async Task Create_ReturnsNull_WhenMeasurementIsNull()
             {
-                var result = await _repo.Create(null as Measurement);
+                var result = await _repo.Create(null);
 
                 _loggerMock.Verify(l => l.LogSuccess("Nullcheck", "Create", null), Times.Never);
                 _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "Nullcheck", "Create", null), Times.Once);
@@ -162,7 +162,8 @@ namespace DataAccessUnitTest
                 // Arrange
                 var measurement =  _measurement;
                 //_sensorRepoMock.Setup(r => r.GetById(It.IsAny<int>())).ReturnsAsync(new Sensor { Id = 1 });
-                _contextMock.Setup(c => c.Measurements.AddAsync(It.IsAny<Measurement>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Database error"));
+                _contextMock.Setup(c => c.Measurements.AddAsync(It.IsAny<Measurement>(), It.IsAny<CancellationToken>())).
+                    ThrowsAsync(new Exception("Database error"));
 
                 // Act
                 var result = await _repo.Create(measurement);
@@ -255,6 +256,8 @@ namespace DataAccessUnitTest
                 var measurements = new List<Measurement>();
                 var measurement = _measurement;
                 measurements.Add(measurement);
+                measurements.Add(measurement);
+                measurements.Add(measurement);
 
                 _sensorRepoMock.Setup(r => r.GetById(It.IsAny<int>())).ReturnsAsync(new Sensor { Id = 1 });
                 _contextMock.Setup(c => c.Measurements.AddRangeAsync(It.IsAny<IEnumerable<Measurement>>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Database error"));
@@ -296,11 +299,13 @@ namespace DataAccessUnitTest
         }
 
         public class GetLastOfSensor : MeasurementRepoTests
-        {
+        {//TODO: Hier wewiter machen. Bis hier sind die Tests alle geprüft.
             [Fact]
             public async Task GetLastOfSensor_ReturnsNull_WhenIdIsInvalid()
             {
-                var result = await _repo.GetById(0);
+                int countOfMesurements = 10;
+                int sensorId = 0;
+                var result = await _repo.GetLastOfSensor(sensorId, countOfMesurements); 
                 Assert.Null(result);
             }
 
@@ -382,7 +387,7 @@ namespace DataAccessUnitTest
             [Fact]
             public async Task GetAllAsList_ReturnsNull_WhenMeasurementIsNull()
             {
-                var result = await _repo.Create(null as Measurement);
+                var result = await _repo.GetAllAsList();
                 Assert.Null(result);
             }
 
