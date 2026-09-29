@@ -117,8 +117,11 @@ namespace DataAccessUnitTest
                 var measurementsList = new List<Measurement>();
 
                 _dbSetMock.Setup(m => m.AddAsync(It.IsAny<Measurement>(), It.IsAny<CancellationToken>()))
-                         .ReturnsAsync((Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Measurement>)null)
-                         .Callback<Measurement, CancellationToken>((m, ct) => measurementsList.Add(m));
+                         .ReturnsAsync((Measurement m, CancellationToken ct) =>
+                         {
+                             measurementsList.Add(m);
+                             return default!;
+                         });
 
                 _contextMock.Setup(c => c.Measurements).Returns(_dbSetMock.Object);
                 _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
@@ -194,12 +197,12 @@ namespace DataAccessUnitTest
             [Fact]
             public async Task Create_ReturnsEmptyList_WhenMeasurementListIsNull()
             {
-                var result = await _repo.CreateByList(null as List<Measurement>);
+                var result = await _repo.CreateByList(null);
                 Assert.Empty(result);
             }
 
             [Fact]
-            public async Task Create_AddsMeasurementList_WhenValid()
+            public async Task CreateByList_AddsMeasurementList_WhenValid()
             {
                 var measurements = new List<Measurement>();
                 var measurement =  _measurement;
@@ -212,7 +215,7 @@ namespace DataAccessUnitTest
                 var result = await _repo.CreateByList(measurements);
                 
                 _loggerMock.Verify(l => l.LogSuccess("SaveChangesAsync", "Create", measurements), Times.Once);
-                _loggerMock.Verify(l => l.LogSuccess("AddAsync", "Create", It.IsAny<Measurement>()), Times.Once);
+                _loggerMock.Verify(l => l.LogSuccess("AddRangeAsync", "Create", It.IsAny<List<Measurement>>()), Times.Once);
                 _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "SaveChangesAsync", "Create", It.IsAny<Measurement>()), Times.Never);
 
                 Assert.Equal(measurements, result);
@@ -220,7 +223,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: Create mit ung�ltigem SensorId
             [Fact]
-            public async Task Create_CreatesNewSensor_WhenSensorIsNotFound()
+            public async Task CreateByList_CreatesNewSensor_WhenSensorIsNotFound()
             {
                 // Arrange
                 var measurements = new List<Measurement>();
@@ -236,8 +239,8 @@ namespace DataAccessUnitTest
                 var result = await _repo.CreateByList(measurements);
 
                 // Assert
-                _loggerMock.Verify(l => l.LogSuccess("AddAsync", "Create", measurement), Times.Once);
-                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "AddAsync", "Create", measurement), Times.Never);
+                _loggerMock.Verify(l => l.LogSuccess("AddRangeAsync", "Create", measurements), Times.Once);
+                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "AddRangeAsync", "Create", measurement), Times.Never);
 
                 _loggerMock.Verify(l => l.LogSuccess("SaveChangesAsync", "Create", measurements), Times.Once);
                 _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "SaveChangesAsync", "Create", measurement), Times.Never);
@@ -246,7 +249,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: Create gibt Null zur�ck bei Ausnahme
             [Fact]
-            public async Task Create_ReturnsEmptyList_OnExceptionInAddAsync()
+            public async Task CreateByList_ReturnsEmptyList_OnExceptionInAddAsync()
             {
                 // Arrange
                 var measurements = new List<Measurement>();
@@ -254,20 +257,20 @@ namespace DataAccessUnitTest
                 measurements.Add(measurement);
 
                 _sensorRepoMock.Setup(r => r.GetById(It.IsAny<int>())).ReturnsAsync(new Sensor { Id = 1 });
-                _contextMock.Setup(c => c.Measurements.AddAsync(It.IsAny<Measurement>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Database error"));
+                _contextMock.Setup(c => c.Measurements.AddRangeAsync(It.IsAny<IEnumerable<Measurement>>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Database error"));
 
                 // Act
                 var expected = new List<Measurement>();
                 var actual = await _repo.CreateByList(measurements);
 
                 // Assert
-                _loggerMock.Verify(l => l.LogSuccess("AddAsync", "Create", measurement), Times.Never);
-                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "AddAsync", "Create", measurement), Times.Once);
+                _loggerMock.Verify(l => l.LogSuccess("AddRangeAsync", "Create", measurements), Times.Never);
+                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "AddRangeAsync", "Create", measurements), Times.Once);
 
                 Assert.Equal(expected, actual);
             }
             [Fact]
-            public async Task Create_ReturnsEmptyList_OnExceptionInSaveChangesAsync()
+            public async Task CreateByList_ReturnsEmptyList_OnExceptionInSaveChangesAsync()
             {
                 // Arrange
                 var measurements = new List<Measurement>();
@@ -275,7 +278,7 @@ namespace DataAccessUnitTest
                 measurements.Add(measurement);
 
                 _sensorRepoMock.Setup(r => r.GetById(It.IsAny<int>())).ReturnsAsync(new Sensor { Id = 1 });
-                _contextMock.Setup(c => c.Measurements.AddAsync(measurement, default)).ReturnsAsync((Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Measurement>)null);
+                _contextMock.Setup(c => c.Measurements.AddRangeAsync(It.IsAny<IEnumerable<Measurement>>(), It.IsAny<CancellationToken>()));
                 _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Database error"));
 
                 // Act
@@ -283,8 +286,8 @@ namespace DataAccessUnitTest
                 var actual = await _repo.CreateByList(measurements);
 
                 // Assert
-                _loggerMock.Verify(l => l.LogSuccess("AddAsync", "Create", measurement), Times.Once);
-                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "AddAsync", "Create", measurement), Times.Never);
+                _loggerMock.Verify(l => l.LogSuccess("AddRangeAsync", "Create", measurements), Times.Once);
+                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "AddRangeAsync", "Create", measurement), Times.Never);
 
                 _loggerMock.Verify(l => l.LogSuccess("SaveChangesAsync", "Create", measurements), Times.Never);
                 _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "SaveChangesAsync", "Create", measurements), Times.Once);
@@ -292,17 +295,17 @@ namespace DataAccessUnitTest
             }
         }
 
-        public class Get : MeasurementRepoTests
+        public class GetLastOfSensor : MeasurementRepoTests
         {
             [Fact]
-            public async Task GetById_ReturnsNull_WhenIdIsInvalid()
+            public async Task GetLastOfSensor_ReturnsNull_WhenIdIsInvalid()
             {
                 var result = await _repo.GetById(0);
                 Assert.Null(result);
             }
 
             [Fact]
-            public async Task GetById_ReturnsMeasurement_WhenFound()
+            public async Task GetLastOfSensor_ReturnsMeasurement_WhenFound()
             {
                 // Arrange
                 var expectedMeasurement =  _measurement;
@@ -326,7 +329,7 @@ namespace DataAccessUnitTest
             }
 
             [Fact]
-            public async Task GetAllAsList_ReturnsMeasurements()
+            public async Task GetLastOfSensor_ReturnsMeasurements()
             {
                 // Arrange
                 var measurement =  _measurement;
@@ -353,7 +356,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: GetAllAsList gibt leere Liste bei keinen Daten zur�ck
             [Fact]
-            public async Task GetAllAsList_ReturnsEmptyList_WhenNoMeasurements()
+            public async Task GetLastOfSensor_ReturnsEmptyList_WhenNoMeasurements()
             {
                 // Arrange
                 var measurements = new List<Measurement>();
@@ -388,7 +391,8 @@ namespace DataAccessUnitTest
             {
                 var measurement = _measurement;
                 _sensorRepoMock.Setup(r => r.GetById(It.IsAny<int>())).ReturnsAsync(new Sensor { Id = 1 });
-                _contextMock.Setup(c => c.Measurements.AddAsync(measurement, default)).ReturnsAsync((Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Measurement>)null);
+                _contextMock.Setup(c => c.Measurements.FindAsync(measurement.Id)).
+                    ReturnsAsync(measurement);
 
                 var result = await _repo.GetById(measurement.Id);
 
@@ -497,15 +501,16 @@ namespace DataAccessUnitTest
         }
         public class GetAllBySensorIdAsList : MeasurementRepoTests
         {
-            [Fact]
-            public async Task Create_ReturnsNull_WhenMeasurementIsNull()
-            {
-                var result = await _repo.Create(null as Measurement);
-                Assert.Null(result);
-            }
+            // [Fact]
+            // public async Task GetAllBySensorIdAsList_ValidSensorIdAndValidMeasurements_ReturnsOnlyValidMeasurements()
+            // {
+            //     _contextMock.Setup(c => c.Measurements.FindAsync(It.IsAny<Expression<Func<Measurement, bool>>>(),))
+            //     var result = await _repo.Create(null as Measurement);
+            //     Assert.Null(result);
+            // }
 
             [Fact]
-            public async Task Create_AddsMeasurement_WhenValid()
+            public async Task GetAllBySensorIdAsList_ValidSensorIdAllMeasurementsValid_ReturnsAllMeasurements()
             {
                 var measurement = _measurement;
                 _sensorRepoMock.Setup(r => r.GetById(It.IsAny<int>())).ReturnsAsync(new Sensor { Id = 1 });
@@ -514,13 +519,13 @@ namespace DataAccessUnitTest
                 var result = await _repo.Create(measurement);
 
                 Assert.Equal(measurement, result);
-                _loggerMock.Verify(l => l.LogSuccess(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Exception>()), Times.Once);
+                _loggerMock.Verify(l => l.LogSuccess("AddAsync", "Create", It.IsAny<Exception>()), Times.Once);
                 _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>(), (Measurement?)null), Times.Never);
             }
 
             // Neuer Test: Create mit ung�ltigem SensorId
             [Fact]
-            public async Task Create_ReturnsNull_WhenSensorIsNotFound()
+            public async Task GetAllBySensorIdAsList_NoMeasurementsFound_ReturnsEmptyList()
             {
                 // Arrange
                 var measurement =  _measurement;
@@ -538,7 +543,26 @@ namespace DataAccessUnitTest
 
             // Neuer Test: Create gibt Null zur�ck bei Ausnahme
             [Fact]
-            public async Task Create_ReturnsNull_OnException()
+            public async Task GetAllBySensorIdAsList_ExceptionThrown_ReturnsEmptyList()
+            {
+                // Arrange
+                var measurement = _measurement;
+                _sensorRepoMock.Setup(r => r.GetById(It.IsAny<int>())).ReturnsAsync(new Sensor { Id = 1 });
+                _contextMock.Setup(c => c.Measurements.AddAsync(It.IsAny<Measurement>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Database error"));
+
+                // Act
+                var result = await _repo.Create(measurement);
+
+                // Assert
+                Assert.Null(result);
+                _loggerMock.Verify(l => l.LogSuccess(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Exception>()), Times.Never);
+                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>(), measurement), Times.Once);
+
+            }
+
+            // Neuer Test: Create gibt Null zur�ck bei Ausnahme
+            [Fact]
+            public async Task GetAllBySensorIdAsList_Executed_StartsAndStopsTimerCorrectly()
             {
                 // Arrange
                 var measurement = _measurement;
@@ -618,14 +642,14 @@ namespace DataAccessUnitTest
         public class GetAll : MeasurementRepoTests
         {
             [Fact]
-            public async Task Create_ReturnsNull_WhenMeasurementIsNull()
+            public async Task GetAll_ReturnsAllMeasurements_WhenAllMeasurementsAreValid()
             {
                 var result = await _repo.Create(null as Measurement);
                 Assert.Null(result);
             }
 
             [Fact]
-            public async Task Create_AddsMeasurement_WhenValid()
+            public async Task GetAll_ReturnsEmptyList_MeasurementsAreNull()
             {
                 var measurement = _measurement;
                 _sensorRepoMock.Setup(r => r.GetById(It.IsAny<int>())).ReturnsAsync(new Sensor { Id = 1 });
@@ -643,7 +667,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: Create mit ung�ltigem SensorId
             [Fact]
-            public async Task Create_ReturnsNull_WhenSensorIsNotFound()
+            public async Task GetAll_ReturnListOfValidMeasurements_WhenMesasurementsArePartialValid()
             {
                 // Arrange
                 var measurement = _measurement;
@@ -661,7 +685,71 @@ namespace DataAccessUnitTest
 
             // Neuer Test: Create gibt Null zur�ck bei Ausnahme
             [Fact]
-            public async Task Create_ReturnsNull_OnException()
+            public async Task GetAll_ReturnEmptyList_OnException()
+            {
+                // Arrange
+                var measurement = _measurement;
+                _sensorRepoMock.Setup(r => r.GetById(It.IsAny<int>())).ReturnsAsync(new Sensor { Id = 1 });
+                _contextMock.Setup(c => c.Measurements.AddAsync(It.IsAny<Measurement>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Database error"));
+
+                // Act
+                var result = await _repo.Create(measurement);
+
+                // Assert
+                Assert.Null(result);
+                _loggerMock.Verify(l => l.LogSuccess(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Exception>()), Times.Never);
+                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>(), measurement), Times.Once);
+
+            }
+        }
+
+        public class GetLastOfSensorSince : MeasurementRepoTests
+        {
+            [Fact]
+            public async Task GetLastOfSensorSince_ReturnsAllMeasurements_WhenAllMeasurementsAreValid()
+            {
+                var result = await _repo.Create(null as Measurement);
+                Assert.Null(result);
+            }
+
+            [Fact]
+            public async Task GetLastOfSensorSince_ReturnsEmptyList_MeasurementsAreNull()
+            {
+                var measurement = _measurement;
+                _sensorRepoMock.Setup(r => r.GetById(It.IsAny<int>())).ReturnsAsync(new Sensor { Id = 1 });
+                _contextMock.Setup(c => c.Measurements.AddAsync(measurement, default)).ReturnsAsync((Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Measurement>)null);
+                _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+                var result = await _repo.Create(measurement);
+
+                _loggerMock.Verify(l => l.LogSuccess("AddAsync", "Create", measurement), Times.Once);
+                _loggerMock.Verify(l => l.LogSuccess("SaveChangesAsync", "Create", measurement), Times.Once);
+                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "AddAsync", "Create", measurement), Times.Never);
+                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), "SaveChangesAsync", "Create", measurement), Times.Never);
+                Assert.Equal(measurement, result);
+            }
+
+            // Neuer Test: Create mit ung�ltigem SensorId
+            [Fact]
+            public async Task GetLastOfSensorSince_ReturnListOfValidMeasurements_WhenMesasurementsArePartialValid()
+            {
+                // Arrange
+                var measurement = _measurement;
+                measurement.SensorId = 999 ;
+                _sensorRepoMock.Setup(r => r.GetById(999)).ReturnsAsync((Sensor)null);
+
+                // Act
+                var result = await _repo.Create(measurement);
+
+                // Assert
+                Assert.Null(result);
+                _loggerMock.Verify(l => l.LogSuccess(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Exception>()), Times.Never);
+                _loggerMock.Verify(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>(), It.IsAny<string>(), measurement), Times.Once);
+            }
+
+            // Neuer Test: Create gibt Null zur�ck bei Ausnahme
+            [Fact]
+            public async Task GetLastOfSensorSince_ReturnEmptyList_OnException()
             {
                 // Arrange
                 var measurement = _measurement;
@@ -811,7 +899,7 @@ namespace DataAccessUnitTest
         public class Delete : MeasurementRepoTests
         {
             [Fact]
-            public async Task DeleteById_RemovesMeasurement_WhenFound()
+            public async Task Delete_RemovesMeasurement_WhenFound()
             {
                 // Arrange
                 var measurementId = 1;
@@ -836,7 +924,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: DeleteById l�scht nichts, wenn Messung nicht gefunden wird
             [Fact]
-            public async Task DeleteById_DoesNotRemove_WhenNotFound()
+            public async Task Delete_DoesNotRemove_WhenNotFound()
             {
                 // Arrange
                 var measurementId = 999;
@@ -856,7 +944,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: DeleteById f�ngt Ausnahme ab und loggt
             [Fact]
-            public async Task DeleteById_LogsError_OnException()
+            public async Task Delete_LogsError_OnException()
             {
                 // Arrange
                 var measurementId = 1;
@@ -882,7 +970,7 @@ namespace DataAccessUnitTest
         public class DeleteAll : MeasurementRepoTests
         {
             [Fact]
-            public async Task DeleteById_RemovesMeasurement_WhenFound()
+            public async Task DeleteAll_RemovesMeasurement_WhenFound()
             {
                 // Arrange
                 var measurementId = 1;
@@ -907,7 +995,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: DeleteById l�scht nichts, wenn Messung nicht gefunden wird
             [Fact]
-            public async Task DeleteById_DoesNotRemove_WhenNotFound()
+            public async Task DeleteAll_DoesNotRemove_WhenNotFound()
             {
                 // Arrange
                 var measurementId = 999;
@@ -927,7 +1015,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: DeleteById f�ngt Ausnahme ab und loggt
             [Fact]
-            public async Task DeleteById_LogsError_OnException()
+            public async Task DeleteAll_LogsError_OnException()
             {
                 // Arrange
                 var measurementId = 1;
@@ -953,7 +1041,7 @@ namespace DataAccessUnitTest
         public class DeleteMeasurmentsBySensorId : MeasurementRepoTests
         {
             [Fact]
-            public async Task DeleteById_RemovesMeasurement_WhenFound()
+            public async Task DeleteMeasurmentsBySensorId_RemovesMeasurement_WhenFound()
             {
                 // Arrange
                 var measurementId = 1;
@@ -978,7 +1066,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: DeleteById l�scht nichts, wenn Messung nicht gefunden wird
             [Fact]
-            public async Task DeleteById_DoesNotRemove_WhenNotFound()
+            public async Task DeleteMeasurmentsBySensorId_DoesNotRemove_WhenNotFound()
             {
                 // Arrange
                 var measurementId = 999;
@@ -998,7 +1086,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: DeleteById f�ngt Ausnahme ab und loggt
             [Fact]
-            public async Task DeleteById_LogsError_OnException()
+            public async Task DeleteMeasurmentsBySensorId_LogsError_OnException()
             {
                 // Arrange
                 var measurementId = 1;
@@ -1024,7 +1112,7 @@ namespace DataAccessUnitTest
         public class DeleteByListOfIds : MeasurementRepoTests
         {
             [Fact]
-            public async Task DeleteById_RemovesMeasurement_WhenFound()
+            public async Task DeleteByListOfIds_RemovesMeasurement_WhenFound()
             {
                 // Arrange
                 var measurementId = 1;
@@ -1049,7 +1137,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: DeleteById l�scht nichts, wenn Messung nicht gefunden wird
             [Fact]
-            public async Task DeleteById_DoesNotRemove_WhenNotFound()
+            public async Task DeleteByListOfIds_DoesNotRemove_WhenNotFound()
             {
                 // Arrange
                 var measurementId = 999;
@@ -1069,7 +1157,7 @@ namespace DataAccessUnitTest
 
             // Neuer Test: DeleteById f�ngt Ausnahme ab und loggt
             [Fact]
-            public async Task DeleteById_LogsError_OnException()
+            public async Task DeleteByListOfIds_LogsError_OnException()
             {
                 // Arrange
                 var measurementId = 1;

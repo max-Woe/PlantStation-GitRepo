@@ -15,7 +15,7 @@ namespace DataAccess.Repositories
     public class MeasurementRepo(IApiContext context, ILoggingService logger, ISensorRepo sensorRepo, IStationRepo stationRepo) : BaseRepo(context, logger), IRepo<Measurement>, IMeasurementRepo
     {
         private readonly ISensorRepo _sensorRepo = sensorRepo; // Hinzufügen des SensorRepo als Abhängigkeit
-        private readonly IStationRepo _stationRepo = stationRepo;
+        // private readonly IStationRepo _stationRepo = stationRepo;
 
         /// <summary>
         /// Creates a single measurement in the database without a MAC address and performs a sensor existence check.
@@ -100,9 +100,9 @@ namespace DataAccess.Repositories
         /// </summary>
         /// <param name="measurements">The list of <see cref="Measurement"/> objects to store.</param>
         /// <returns>The list of stored <see cref="Measurement"/> objects. Returns an empty list if the input list is empty or on error.</returns>
-        public async Task<List<Measurement>> CreateByList(List<Measurement> measurements)
+        public async Task<List<Measurement>> CreateByList(List<Measurement>? measurements)
         {
-            if(measurements.IsNullOrEmpty())
+            if(measurements==null || measurements.Count == 0)
             {
                 return new List<Measurement>();
             }
@@ -119,7 +119,7 @@ namespace DataAccess.Repositories
 
                 }
 
-                await TryExecuteAsync<int>(async () =>
+                await TryExecuteAsync(async () =>
                 {
                     await _context.Measurements.AddRangeAsync(measurements);
                     return measurements.Count;
@@ -166,7 +166,7 @@ namespace DataAccess.Repositories
                 
                 return measurementsFromDb;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return new List<Measurement>();
             }
@@ -325,8 +325,6 @@ namespace DataAccess.Repositories
                 _logger.StopTimer(); 
             }
         }
-
-
         /// <inheritdoc/>
         public async Task<List<Measurement>> GetLastOfSensor(int sensorId, int count)
         {
@@ -365,7 +363,6 @@ namespace DataAccess.Repositories
                 _logger.StopTimer();
             }
         }
-
         /// <inheritdoc/>
         public async Task<List<Measurement>> GetLastOfSensorSince(int sensorId, DateTime since)
         {
@@ -427,10 +424,10 @@ namespace DataAccess.Repositories
                     return null;
                 }
 
-                await TryExecuteAsync<object>(() =>
+                await TryExecuteAsync(() =>
                 {
                     measurementFromDb.Update(measurement);
-                    return Task.FromResult<object>(null);
+                    return Task.FromResult<object?>(null);
                 }, "Update", "Update", measurement);
                 
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChanges", "Update", measurement);
@@ -463,8 +460,8 @@ namespace DataAccess.Repositories
                 measurements.RemoveAll(m => !MeasurementValueIsValid(m));
             }
 
-            List<Measurement>? measurementsFromDb = new List<Measurement>();
-            Measurement? measurementFromDb;
+            List<Measurement>? measurementsFromDb;
+            // Measurement? measurementFromDb;
 
             _logger.StartTimer();
 
@@ -476,12 +473,12 @@ namespace DataAccess.Repositories
                     "UpdateByList", 
                     measurements);
                 
-                if (measurementsFromDb.IsNullOrEmpty())
+                if (measurementsFromDb == null || measurementsFromDb.Count == 0)
                 {
                     return new List<Measurement>();
                 }
 
-                Dictionary<int,Measurement>? measurementsDict = measurements.ToDictionary(m => m.Id, m=>m);
+                Dictionary<int,Measurement> measurementsDict = measurements.ToDictionary(m => m.Id, m=>m);
 
                 foreach (var measurement in measurementsFromDb)
                 {
@@ -532,10 +529,10 @@ namespace DataAccess.Repositories
                     return null;
                 }
 
-                await TryExecuteAsync<object>(() =>
+                await TryExecuteAsync(() =>
                 {
                     _context.Measurements.Remove(measurementFromDb);
-                    return Task.FromResult<object>(null);
+                    return Task.FromResult<object?>(null);
                 }, "Remove", "DeleteById", id);
 
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChanges", "DeleteById", id);
@@ -569,20 +566,20 @@ namespace DataAccess.Repositories
                     "ToListAsync", 
                     "DeleteAll");
 
-                if (measurementsFromDb.IsNullOrEmpty())
+                if (measurementsFromDb == null || measurementsFromDb.Count == 0)
                 {
                     return new List<Measurement>();
                 }
 
-                await TryExecuteAsync<object>(() =>
+                await TryExecuteAsync(() =>
                 {
                     _context.Measurements.RemoveRange(measurementsFromDb);
-                    return Task.FromResult<object>(null);
+                    return Task.FromResult<object?>(null);
                 }, "RemoveRange", "DeleteAll", measurementsFromDb);
 
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChanges", "DeleteAll", measurementsFromDb);
 
-                return measurementsFromDb!;
+                return measurementsFromDb;
             }
             catch (Exception)
             {
@@ -604,23 +601,22 @@ namespace DataAccess.Repositories
                 measurementsFromDb = await TryExecuteAsync(
                     async() => await _context.Measurements.Where(m => m.SensorId == sensorId).ToListAsync(), 
                     "ToListAsync", 
-                    "DeleteMeasurmentsBySensorId", 
-                    null);
+                    "DeleteMeasurmentsBySensorId");
 
-                if (measurementsFromDb.IsNullOrEmpty())
+                if (measurementsFromDb == null || measurementsFromDb.Count == 0)
                 {
                     return measurementsFromDb!;
                 }
 
-                await TryExecuteAsync<object>(() =>
+                await TryExecuteAsync(() =>
                 {
                     _context.Measurements.RemoveRange(measurementsFromDb);
-                    return Task.FromResult<object>(null);
+                    return Task.FromResult<object?>(null);
                 }, "RemoveRange", "DeleteMeasurmentsBySensorId", sensorId);
 
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChanges", "DeleteMeasurmentsBySensorId", sensorId);
                 
-                return measurementsFromDb!;
+                return measurementsFromDb;
             }
             catch (Exception)
             {
@@ -641,25 +637,25 @@ namespace DataAccess.Repositories
         {
             _logger.StartTimer();
 
-            List<Measurement> measurementsFromDb = new List<Measurement>();
+            List<Measurement>? measurementsFromDb = new List<Measurement>();
             try
             {
-                measurementsFromDb = await TryExecuteAsync(async() => await GetByListOfIds(ids), "GetByListOfIds", "DeleteByListOfIds", null);
+                measurementsFromDb = await TryExecuteAsync(async() => await GetByListOfIds(ids), "GetByListOfIds", "DeleteByListOfIds");
 
-                if (measurementsFromDb.IsNullOrEmpty())
+                if (measurementsFromDb == null || measurementsFromDb.Count == 0)
                 {
                     return new List<Measurement>();
                 }
 
-                await TryExecuteAsync<object>(() =>
+                await TryExecuteAsync(() =>
                 {
                     _context.Measurements.RemoveRange(measurementsFromDb);
-                    return Task.FromResult<object>(null);
+                    return Task.FromResult<object?>(null);
                 }, "RemoveRange", "DeleteByListOfIds", ids);
                 
                 await TryExecuteAsync(async () => await _context.SaveChangesAsync(), "SaveChanges", "DeleteByListOfIds", ids);
                 
-                return measurementsFromDb!;
+                return measurementsFromDb;
 
             }
             catch (Exception)
@@ -676,24 +672,25 @@ namespace DataAccess.Repositories
         /// </remarks>
         public async Task<Sensor?> EnsureSensorExisting(Measurement measurement, string? macAddress)
         {
-            if ( measurement == null || string.IsNullOrEmpty(macAddress))
+            // if ( measurement == null || string.IsNullOrEmpty(macAddress))
+            if (string.IsNullOrEmpty(macAddress))
             {
                 return null;
             }
 
             Sensor? sensor = null;
 
-            Station? station = await _sensorRepo.EnsureStationExisting(sensor, macAddress);
+            var station = await _sensorRepo.EnsureStationExisting(sensor, macAddress);
             if(station == null)
             {
                 return null;
             }   
-            List<Sensor> sensors = await sensorRepo.GetByStationId(station.Id);
-            foreach (Sensor sensor_entry in sensors)
+            var sensors = await sensorRepo.GetByStationId(station.Id);
+            foreach (Sensor sensorEntry in sensors)
             {
-                if (sensor_entry.Unit == measurement.Unit)
+                if (sensorEntry.Unit == measurement.Unit)
                 {
-                    sensor = sensor_entry;
+                    sensor = sensorEntry;
                 }
             }
             // sensor = await sensorRepo.GetById(measurement.SensorId);
