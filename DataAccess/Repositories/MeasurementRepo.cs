@@ -789,38 +789,17 @@ namespace DataAccess.Repositories
             switch (measurement.Type)
             {
                 case "temperature":
-                    if(measurement.Value < -40)
+                    if(measurement.Value is < -40 or > 60)
                     {
-                        measurement.Value = -41;
-                    }
-
-                    if (measurement.Value > 600)
-                    {
-                        measurement.Value = 601;
+                        measurement.Value = 9999;
                     }
                     break;
                     
                 case "humidity":
-                    if (measurement.Value < 0)
-                    {
-                        measurement.Value = -1;
-                    }
-
-                    if (measurement.Value > 100)
-                    {
-                        measurement.Value = 101;
-                    }
-                    break;
-                    
                 case "soil_moisture":
-                    if (measurement.Value < 0)
+                    if(measurement.Value is < 0 or > 100)
                     {
-                        measurement.Value = -1;
-                    }
-
-                    if (measurement.Value > 100)
-                    {
-                        measurement.Value = 101;
+                        measurement.Value = 9999;
                     }
                     break;
             }
