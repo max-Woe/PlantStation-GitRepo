@@ -26,6 +26,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChartsJsBlazorApp", "Charts
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions", "Extensions\Extensions.csproj", "{E181BA1D-550A-4C08-BAFC-33A1C8057154}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{2D6BC796-66D6-4B57-9ADE-67A5F653967B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflow", "workflow", "{46EEE6E8-1B33-4819-A36D-1AF17430E410}"
+EndProject
 
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -79,5 +83,8 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8FB96CA3-9BD8-4FEC-AE8F-DCFBB93838EF}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{46EEE6E8-1B33-4819-A36D-1AF17430E410} = {2D6BC796-66D6-4B57-9ADE-67A5F653967B}
 	EndGlobalSection
 EndGlobal
