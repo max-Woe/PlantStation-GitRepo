@@ -333,14 +333,49 @@ namespace DataAccess.Repositories
                 return new List<Measurement>();
             }
 
-            DateTime timeOfFirstMeasurement = DateTime.UtcNow.AddMinutes(-count);
+            _logger.StartTimer();
+
+            try
+            {
+                List<Measurement>?measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt).Take(count).ToListAsync(), "ToListAsync", "GetLast");
+                
+                if(measurementsFromDb==null)
+                {
+                    _logger.StopTimer();
+                    return new List<Measurement>();
+                }
+                else if (measurementsFromDb.Any())
+                {
+                    measurementsFromDb.RemoveAll(m => !MeasurementValueIsValid(m));
+                }
+
+                return measurementsFromDb;
+            }
+            catch (Exception)
+            {
+                return new List<Measurement>();
+            }
+            finally
+            {
+                _logger.StopTimer();
+            }
+        }
+        /// <inheritdoc/>
+        public async Task<List<Measurement>> GetLastOfSensorSinceMinutes(int sensorId, int minutes)
+        {
+            if (minutes <= 0)
+            {
+                return new List<Measurement>();
+            }
+
+            DateTime timeOfFirstMeasurement = DateTime.UtcNow.AddMinutes(-minutes);
 
             _logger.StartTimer();
 
             try
             {
                 //measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.SensorId == sensorId).OrderByDescending(m => m.RecordedAt).Take(count).ToListAsync(), "ToListAsync", "GetLast");
-                List<Measurement>? measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.SensorId == sensorId && m.RecordedAt>timeOfFirstMeasurement).OrderByDescending(m => m.RecordedAt).ToListAsync(), "ToListAsync", "GetLast");
+                List<Measurement>? measurementsFromDb = await TryExecuteAsync(async () => await _context.Measurements.Where(m => m.SensorId == sensorId && m.RecordedAt>timeOfFirstMeasurement).OrderByDescending(m => m.RecordedAt).ToListAsync(), "ToListAsync", "GetLastSinceMinutes");
                 
                 if(measurementsFromDb==null)
                 {

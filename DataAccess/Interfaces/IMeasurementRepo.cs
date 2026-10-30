@@ -64,6 +64,15 @@ namespace DataAccess.Interfaces
         Task<List<Measurement>> GetLastOfSensor(int sensorId, int count);
 
         /// <summary>
+        /// Retrieves the last <paramref name="minutes"/> measurements for a specific sensor.
+        /// Measurements are ordered descending by their recording time.
+        /// </summary>
+        /// <param name="sensorId">The ID of the sensor.</param>
+        /// <param name="minutes">The timespan, in minutes, of measurements to retrieve.</param>
+        /// <returns>A Task that returns a <see cref="List{T}"/> of the latest <see cref="Measurement"/> objects for the sensor. Returns an empty list on error or if <paramref name="minutes"/> is less than or equal to zero.</returns>
+        Task<List<Measurement>> GetLastOfSensorSinceMinutes(int sensorId, int minutes);
+
+        /// <summary>
         /// Retrieves all measurements for a specific sensor recorded since a given point in time (<paramref name="since"/>).
         /// Measurements are ordered descending by their recording time.
         /// </summary>
