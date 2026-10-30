@@ -1,10 +1,12 @@
+#!/usr/bin/env python3
+
 import datetime
 from datetime import timezone, timedelta
 
 import requests
 
-BASE_URL = "http://192.168.178.21:5000"          #In der Entwicklung
-#BASE_URL = "http://localhost:5000"          #Auf dem Pi
+# BASE_URL = "http://192.168.178.21:5000"          #In der Entwicklung
+BASE_URL = "http://localhost:5000"          #Auf dem Pi
 TIMEOUT = 5
 
 def main():
