@@ -25,9 +25,9 @@ def main():
                 measurement = get_last_measurement_from_sensor_by_sensor_id(sensor_id)
 
                 if is_sensor_value_valid(measurement["value"]):
-                    print(build_local_check_line(0,f"Sensor{sensor_id}", measurement['value'], "Der Sensor liefert valide Werte."))
+                    print(build_local_check_line(0,f"Sensor{sensor_id}({measurement["type"]})", measurement['value'], "Der Sensor liefert valide Werte."))
                 else:
-                    print(build_local_check_line(2,f"Sensor{sensor_id}", measurement['value'], "Der Sensor liefert keine validen Werte."))
+                    print(build_local_check_line(2,f"Sensor{sensor_id}({measurement["type"]})", measurement['value'], "Der Sensor liefert keine validen Werte."))
 
                 sensor_time = datetime.datetime.fromisoformat(measurement["recordedAt"])
                 if (last_measurement_timestamp - sensor_time).total_seconds() > 0.0:
