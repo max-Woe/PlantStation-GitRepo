@@ -36,10 +36,10 @@ def main():
             delta_last_station_update = datetime.datetime.now(timezone.utc)-last_measurement_timestamp
             if delta_last_station_update > datetime.timedelta(minutes=5):
                 print(build_local_check_line(2, f"Station{station_id}", delta_last_station_update,
-                                             "Die Station hat seit mehr als 5 Minuten keinen neuen Messwert erhalten."))
+                                             f"Die Station hat seit mehr als {int(delta_last_station_update.total_seconds()/60)} Minuten keinen neuen Messwert erhalten."))
             elif delta_last_station_update> datetime.timedelta(minutes=2):
                 print(build_local_check_line(1, f"Station{station_id}", delta_last_station_update,
-                                             "Die Station hat seit mehr als 2 Minuten keinen neuen Messwert erhalten."))
+                                             f"Die Station hat seit mehr als {int(delta_last_station_update.total_seconds()/60)} Minuten keinen neuen Messwert erhalten."))
             else:
                 print(build_local_check_line(0, f"Station{station_id}", delta_last_station_update,
                                              "Die Station läuft aktiv."))
@@ -72,13 +72,17 @@ def get_all_sensor_ids_by_station_id(station_id: int):
     return sensor_ids
 
 def get_last_measurement_from_sensor_by_sensor_id(sensor_id:int):
-    response = requests.get(f"{BASE_URL}/api/Measurement/GetLastOfSensor",
-                            params={"sensorId": sensor_id, "count": 1},
-                            timeout=TIMEOUT)
+    try:
+        response = requests.get(f"{BASE_URL}/api/Measurement/GetLastOfSensor",
+                                params={"sensorId": sensor_id, "count": 1},
+                                timeout=TIMEOUT)
 
-    measurement = response.json()
+        measurement = response.json()
 
-    return measurement[0]
+        return measurement[0]
+    except:
+        return None
+
 
 
 def build_local_check_line(status: int, servicename:str, metrics:int|timedelta, text:str):
